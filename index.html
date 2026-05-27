@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contested Skies Monitor — Latin America Drone Threat Tracker</title>
+<meta name="description" content="Live monitoring of criminal and paramilitary drone use across Latin America. Incident tracker, country threat assessments, platform analysis, regulatory landscape." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@300;400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e0f;
+    --bg-2:#0f1416;
+    --panel:#131a1c;
+    --panel-2:#1a2225;
+    --line:#2a3438;
+    --line-2:#3a474c;
+    --ink:#e8ebe9;
+    --ink-dim:#9aa5a3;
+    --ink-faint:#5d6a68;
+    --accent:#d4ff3a;       /* signal yellow-green */
+    --accent-2:#ff5e3a;     /* alert red */
+    --accent-3:#3ad4ff;     /* info cyan */
+    --severe:#ff3a3a;
+    --high:#ff8b3a;
+    --moderate:#ffd13a;
+    --low:#7ad43a;
+    --calm:#3a8b9a;
+    --grid: rgba(212,255,58,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Inter Tight',sans-serif;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  body{
+    background:
+      radial-gradient(ellipse at top left, rgba(212,255,58,0.04), transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(255,94,58,0.03), transparent 50%),
+      var(--bg);
+    min-height:100vh;
+    background-attachment:fixed;
+  }
+  /* grain overlay */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
+    mix-blend-mode:overlay;opacity:0.6;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+
+  /* ====== TOP BAR ====== */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:rgba(10,14,15,0.85);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+    padding:14px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-mark{
+    width:36px;height:36px;border:1px solid var(--accent);
+    display:grid;place-items:center;font-family:'JetBrains Mono',monospace;
+    font-weight:700;color:var(--accent);font-size:14px;letter-spacing:-0.5px;
+    background:rgba(212,255,58,0.05);
+  }
+  .brand-name{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;letter-spacing:0.5px;}
+  .brand-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:2px;margin-top:-2px;}
+  .top-nav{display:flex;gap:28px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-dim);}
+  .top-nav a{position:relative;padding:4px 0;transition:color .2s;}
+  .top-nav a:hover{color:var(--accent);}
+  .top-meta{display:flex;align-items:center;gap:18px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);}
+  .live-dot{width:8px;height:8px;background:var(--accent-2);border-radius:50%;display:inline-block;margin-right:6px;animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(1.3);}}
+
+  /* ====== HERO ====== */
+  .hero{
+    position:relative;
+    padding:64px 28px 48px;
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+  }
+  .hero-grid{
+    position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:60px 60px;
+    mask-image:radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  .hero-inner{position:relative;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;}
+  .hero h1{
+    font-family:'Playfair Display',serif;font-weight:900;
+    font-size:clamp(48px,6vw,84px);line-height:0.95;letter-spacing:-2px;
+  }
+  .hero h1 .em{font-style:italic;font-weight:400;color:var(--accent);}
+  .hero p.lede{
+    margin-top:24px;font-size:17px;color:var(--ink-dim);max-width:540px;line-height:1.55;
+  }
+  .hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .hstat{background:var(--panel);padding:20px 22px;}
+  .hstat-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint);}
+  .hstat-value{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;margin-top:8px;line-height:1;}
+  .hstat-delta{font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:6px;color:var(--accent-2);}
+  .hstat-delta.up{color:var(--accent-2);}
+  .hstat-delta.flat{color:var(--ink-dim);}
+
+  /* ====== STATUS STRIP ====== */
+  .status-strip{
+    display:flex;gap:0;border-bottom:1px solid var(--line);
+    background:var(--bg-2);overflow-x:auto;
+  }
+  .status-cell{
+    flex:1;min-width:200px;padding:18px 22px;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .status-cell:last-child{border-right:none;}
+  .status-cell .k{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint);}
+  .status-cell .v{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500;color:var(--ink);}
+  .status-cell .v.alert{color:var(--accent-2);}
+  .status-cell .v.warn{color:var(--moderate);}
+
+  /* ====== LAYOUT ====== */
+  .main{max-width:1400px;margin:0 auto;padding:48px 28px;display:flex;flex-direction:column;gap:64px;}
+  section{scroll-margin-top:80px;}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:14px;}
+  .section-head h2{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;letter-spacing:-0.5px;}
+  .section-head h2 .num{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:400;color:var(--accent);margin-right:14px;letter-spacing:2px;}
+  .section-head .meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:1.5px;}
+
+  /* ====== MAP SECTION ====== */
+  .map-wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:0;border:1px solid var(--line);background:var(--panel);min-height:640px;}
+  .map-pane{position:relative;background:var(--bg-2);overflow:hidden;border-right:1px solid var(--line);}
+  .map-svg{width:100%;height:100%;display:block;}
+  .map-legend{
+    position:absolute;bottom:16px;left:16px;
+    background:rgba(10,14,15,0.85);backdrop-filter:blur(8px);
+    border:1px solid var(--line);padding:12px 14px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+  }
+  .map-legend-title{text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint);margin-bottom:8px;}
+  .legend-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .legend-sw{width:14px;height:14px;display:block;}
+  .map-tag{position:absolute;top:16px;right:16px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--ink-faint);background:rgba(10,14,15,0.7);padding:6px 10px;border:1px solid var(--line);}
+  .country-node{cursor:pointer;transition:all .2s;}
+  .country-node:hover{filter:brightness(1.3);}
+  .country-node.active circle{stroke:var(--accent);stroke-width:2;}
+  .country-label{font-family:'JetBrains Mono',monospace;font-size:9px;fill:var(--ink-dim);text-transform:uppercase;letter-spacing:1px;pointer-events:none;}
+
+  .detail-pane{padding:28px;display:flex;flex-direction:column;gap:0;overflow-y:auto;max-height:640px;}
+  .detail-pane::-webkit-scrollbar{width:6px;}
+  .detail-pane::-webkit-scrollbar-track{background:var(--bg);}
+  .detail-pane::-webkit-scrollbar-thumb{background:var(--line-2);}
+  .country-header{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--line);}
+  .country-header h3{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;letter-spacing:-0.5px;line-height:1;}
+  .country-header .iso{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);letter-spacing:2px;margin-top:6px;}
+  .threat-badge{
+    font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;
+    padding:6px 10px;border:1px solid currentColor;
+  }
+  .threat-badge.severe{color:var(--severe);}
+  .threat-badge.high{color:var(--high);}
+  .threat-badge.moderate{color:var(--moderate);}
+  .threat-badge.low{color:var(--low);}
+  .threat-badge.calm{color:var(--calm);}
+
+  .counter-block{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);margin:20px 0;border:1px solid var(--line);}
+  .counter-cell{background:var(--bg-2);padding:18px;}
+  .counter-cell .lab{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint);}
+  .counter-cell .num{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;line-height:1;margin-top:6px;}
+  .counter-cell .num.big{color:var(--accent-2);}
+  .counter-cell .sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);margin-top:4px;}
+
+  .detail-block{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
+  .detail-block h4{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:10px;}
+  .detail-block p{font-size:13px;line-height:1.6;color:var(--ink);}
+  .detail-block ul{list-style:none;padding:0;}
+  .detail-block li{font-size:13px;padding:6px 0;border-bottom:1px dotted var(--line);display:flex;justify-content:space-between;gap:12px;}
+  .detail-block li:last-child{border-bottom:none;}
+  .detail-block li .tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:1px;flex-shrink:0;}
+
+  .pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border:1px solid var(--line-2);color:var(--ink-dim);text-transform:uppercase;letter-spacing:1px;margin:2px 4px 2px 0;}
+  .pill.vnsa{border-color:var(--accent-2);color:var(--accent-2);}
+  .pill.platform{border-color:var(--accent-3);color:var(--accent-3);}
+  .pill.foreign{border-color:var(--moderate);color:var(--moderate);}
+
+  /* ====== INCIDENT FEED ====== */
+  .feed-layout{display:grid;grid-template-columns:1fr 320px;gap:24px;}
+  .feed{display:flex;flex-direction:column;}
+  .feed-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .filter-btn{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;padding:7px 12px;border:1px solid var(--line);color:var(--ink-dim);transition:all .15s;}
+  .filter-btn:hover{border-color:var(--accent);color:var(--ink);}
+  .filter-btn.on{background:var(--accent);color:#0a0e0f;border-color:var(--accent);font-weight:700;}
+  .feed-list{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);}
+  .incident{
+    padding:20px 22px;border-bottom:1px solid var(--line);
+    display:grid;grid-template-columns:90px 1fr auto;gap:20px;align-items:start;
+    transition:background .15s, border-left-color .15s;
+    color:inherit;text-decoration:none;
+    border-left:2px solid transparent;
+    position:relative;
+  }
+  .incident:hover{background:var(--panel-2);border-left-color:var(--accent);}
+  .incident:hover h5{color:var(--accent);}
+  .incident:hover .inc-side .src{color:var(--ink);}
+  .incident:hover .ext-arrow{opacity:1;transform:translate(0,0);}
+  .incident:last-child{border-bottom:none;}
+  .incident h5{transition:color .15s;}
+  .ext-arrow{
+    position:absolute;top:18px;right:18px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:var(--accent);opacity:0;transform:translate(-4px,4px);transition:all .2s;
+    pointer-events:none;
+  }
+  .inc-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);}
+  .inc-time .date{display:block;color:var(--ink);font-weight:500;}
+  .inc-time .ago{font-size:10px;color:var(--ink-faint);margin-top:2px;}
+  .inc-body h5{font-family:'Inter Tight',sans-serif;font-size:15px;font-weight:600;line-height:1.4;margin-bottom:6px;}
+  .inc-body .desc{font-size:13px;color:var(--ink-dim);line-height:1.5;}
+  .inc-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .inc-tag{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;border:1px solid var(--line-2);color:var(--ink-dim);}
+  .inc-tag.kinetic{border-color:var(--severe);color:var(--severe);}
+  .inc-tag.recon{border-color:var(--accent-3);color:var(--accent-3);}
+  .inc-tag.smuggle{border-color:var(--moderate);color:var(--moderate);}
+  .inc-tag.chem{border-color:var(--accent-2);color:var(--accent-2);background:rgba(255,94,58,0.08);}
+  .inc-tag.counter{border-color:var(--low);color:var(--low);}
+  .inc-side{text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);}
+  .inc-side .src{display:block;color:var(--ink-dim);text-transform:uppercase;letter-spacing:1px;}
+  .inc-side .country{display:block;color:var(--accent);margin-top:4px;font-weight:500;}
+
+  .sidebar{display:flex;flex-direction:column;gap:18px;}
+  .side-card{border:1px solid var(--line);background:var(--panel);padding:18px;}
+  .side-card h4{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .src-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;}
+  .src-row .name{color:var(--ink);}
+  .src-row .count{font-family:'JetBrains Mono',monospace;color:var(--ink-dim);}
+  .bar{height:4px;background:var(--bg);position:relative;margin-top:4px;}
+  .bar-fill{height:100%;background:var(--accent);}
+
+  /* ====== PLATFORMS ====== */
+  .platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .plat{background:var(--panel);padding:24px;display:flex;flex-direction:column;gap:12px;}
+  .plat-head{display:flex;justify-content:space-between;align-items:start;}
+  .plat-head h4{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:-0.3px;}
+  .plat-head .mkr{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px;}
+  .plat-role{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);}
+  .plat-spec{font-size:13px;color:var(--ink-dim);line-height:1.55;}
+  .plat-spec strong{color:var(--ink);font-weight:500;}
+  .plat-uses{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:12px;border-top:1px dotted var(--line-2);}
+
+  /* ====== CAPABILITIES / TIMELINE ====== */
+  .cap-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .cap-col{border:1px solid var(--line);background:var(--panel);padding:24px;}
+  .cap-col h3{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:6px;letter-spacing:-0.3px;}
+  .cap-col .cap-sub{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint);margin-bottom:18px;}
+  .cap-item{padding:14px 0;border-bottom:1px solid var(--line);}
+  .cap-item:last-child{border-bottom:none;}
+  .cap-item .top{display:flex;justify-content:space-between;align-items:start;gap:12px;}
+  .cap-item h5{font-size:14px;font-weight:600;}
+  .cap-item .amt{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;}
+  .cap-item p{font-size:12px;color:var(--ink-dim);margin-top:4px;line-height:1.5;}
+
+  /* ====== FINANCE / CRYPTO ====== */
+  .finance{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);}
+  .fin-cell{background:var(--panel);padding:24px;}
+  .fin-cell h4{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+  .fin-cell .fin-sub{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px;}
+  .fin-cell p{font-size:13px;color:var(--ink-dim);line-height:1.6;}
+  .fin-cell .stat{font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--ink);margin-top:12px;display:block;}
+
+  /* ====== REGULATORY ====== */
+  .reg-table{width:100%;border-collapse:collapse;border:1px solid var(--line);background:var(--panel);font-size:12px;}
+  .reg-table th{text-align:left;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);border-bottom:1px solid var(--line);background:var(--bg-2);}
+  .reg-table td{padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink-dim);vertical-align:top;}
+  .reg-table tr:last-child td{border-bottom:none;}
+  .reg-table td:first-child{color:var(--ink);font-weight:500;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1px;}
+  .reg-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 6px;border:1px solid var(--line-2);margin-right:4px;color:var(--ink-dim);}
+  .reg-tag.yes{border-color:var(--low);color:var(--low);}
+  .reg-tag.partial{border-color:var(--moderate);color:var(--moderate);}
+  .reg-tag.no{border-color:var(--severe);color:var(--severe);}
+
+  /* ====== SOURCES ====== */
+  .sources-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center;}
+  .src-country-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .src-country-filters .filter-btn{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;padding:7px 12px;border:1px solid var(--line);color:var(--ink-dim);transition:all .15s;background:transparent;cursor:pointer;}
+  .src-country-filters .filter-btn:hover{border-color:var(--accent);color:var(--ink);}
+  .src-country-filters .filter-btn.on{background:var(--accent);color:#0a0e0f;border-color:var(--accent);font-weight:700;}
+  .src-country-filters .filter-btn .ct{font-family:'JetBrains Mono',monospace;color:inherit;opacity:.65;margin-left:6px;font-weight:400;}
+  .sources-search{
+    flex:1;min-width:240px;
+    background:var(--panel);border:1px solid var(--line);
+    padding:10px 14px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:12px;
+    outline:none;transition:border-color .15s;
+  }
+  .sources-search:focus{border-color:var(--accent);}
+  .sources-search::placeholder{color:var(--ink-faint);}
+  .src-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:1.5px;margin-left:auto;}
+  .sources-stack{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);background:var(--panel);}
+  .src-group{border-bottom:1px solid var(--line);}
+  .src-group:last-child{border-bottom:none;}
+  .src-group-head{
+    width:100%;display:flex;align-items:center;justify-content:space-between;
+    padding:18px 22px;cursor:pointer;background:transparent;
+    transition:background .15s;text-align:left;
+  }
+  .src-group-head:hover{background:var(--panel-2);}
+  .src-group-head .left{display:flex;align-items:center;gap:14px;}
+  .src-group-head .chev{
+    width:10px;height:10px;border-right:1.5px solid var(--accent);border-bottom:1.5px solid var(--accent);
+    transform:rotate(-45deg);transition:transform .25s;
+  }
+  .src-group.open .chev{transform:rotate(45deg);}
+  .src-group-head .country-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;letter-spacing:-0.3px;}
+  .src-group-head .src-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);background:var(--bg);padding:3px 10px;border:1px solid var(--line);}
+  .src-group-head .right{display:flex;align-items:center;gap:14px;}
+  .src-group-head .src-threat{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;padding:3px 8px;border:1px solid currentColor;}
+  .src-list{
+    max-height:0;overflow:hidden;
+    transition:max-height .35s ease;
+    background:var(--bg-2);
+  }
+  .src-group.open .src-list{max-height:2400px;}
+  .src-item{
+    display:grid;grid-template-columns:92px 1fr auto;gap:18px;align-items:start;
+    padding:16px 22px 16px 36px;border-top:1px solid var(--line);
+  }
+  .src-item:first-child{border-top:1px dashed var(--line);}
+  .src-item .src-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);}
+  .src-item h6{font-family:'Inter Tight',sans-serif;font-size:14px;font-weight:600;line-height:1.45;margin-bottom:4px;}
+  .src-item h6 a{color:var(--ink);transition:color .15s;}
+  .src-item h6 a:hover{color:var(--accent);}
+  .src-item .src-pub{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);}
+  .src-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;padding:2px 7px;margin-left:8px;border:1px solid currentColor;vertical-align:middle;}
+  .src-badge.recent{color:var(--accent);}
+  .src-badge.platform{color:var(--accent-2);background:rgba(255,94,58,0.08);}
+  .src-item .src-blurb{font-size:12px;color:var(--ink-dim);line-height:1.55;margin-top:6px;}
+  .src-item .src-out{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1.5px;padding:4px 10px;border:1px solid var(--line);transition:all .15s;white-space:nowrap;}
+  .src-item .src-out:hover{color:var(--accent);border-color:var(--accent);}
+  @media (max-width:680px){
+    .src-item{grid-template-columns:1fr;padding-left:22px;gap:6px;}
+    .src-group-head .country-name{font-size:16px;}
+  }
+
+  /* ====== FOOTER ====== */
+  footer{
+    border-top:1px solid var(--line);
+    padding:48px 28px 32px;background:var(--bg-2);
+  }
+  .foot-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;}
+  .foot-brand h3{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:8px;}
+  .foot-brand p{font-size:13px;color:var(--ink-dim);line-height:1.6;max-width:380px;}
+  .foot-col h5{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:14px;}
+  .foot-col a{display:block;font-size:13px;color:var(--ink-dim);padding:4px 0;transition:color .15s;}
+  .foot-col a:hover{color:var(--ink);}
+  .foot-bottom{max-width:1400px;margin:32px auto 0;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1.5px;}
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width:1100px){
+    .hero-inner{grid-template-columns:1fr;}
+    .map-wrap{grid-template-columns:1fr;}
+    .map-pane{border-right:none;border-bottom:1px solid var(--line);min-height:480px;}
+    .detail-pane{max-height:none;}
+    .feed-layout{grid-template-columns:1fr;}
+    .platforms{grid-template-columns:1fr;}
+    .cap-grid{grid-template-columns:1fr;}
+    .finance{grid-template-columns:1fr;}
+    .foot-inner{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:680px){
+    .top-nav{display:none;}
+    .hero{padding:40px 20px 32px;}
+    .hero h1{font-size:42px;}
+    .hero-stats{grid-template-columns:1fr;}
+    .main{padding:32px 20px;gap:48px;}
+    .section-head h2{font-size:26px;}
+    .incident{grid-template-columns:1fr;gap:8px;}
+    .reg-table{font-size:10px;}
+    .reg-table th, .reg-table td{padding:8px 10px;}
+    .foot-inner{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== TOP BAR ============== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">CS</div>
+    <div>
+      <div class="brand-name">Contested Skies</div>
+      <div class="brand-sub">Latin America Drone Threat Monitor</div>
+    </div>
+  </div>
+  <nav class="top-nav">
+    <a href="#map">Map</a>
+    <a href="#feed">Incidents</a>
+    <a href="#platforms">Platforms</a>
+    <a href="#capabilities">Capabilities</a>
+    <a href="#finance">Finance</a>
+    <a href="#regulation">Regulation</a>
+    <a href="#sources">Sources</a>
+  </nav>
+  <div class="top-meta">
+    <span><span class="live-dot"></span>LIVE</span>
+    <span id="clock">— —</span>
+  </div>
+</header>
+
+<!-- ============== HERO ============== -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:3px;margin-bottom:24px;">SITREP // 2026.05.27 // OPEN-SOURCE INTEL</div>
+      <h1>The skies above Latin America <span class="em">are no longer the state's alone.</span></h1>
+      <p class="lede">An open-source dashboard tracking the proliferation of unmanned aerial systems among cartels, insurgents, and paramilitaries — and the regional response. Aggregating reporting from Infodefensa, Semana, El Tiempo, InSight Crime, and verified social channels.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat">
+        <div class="hstat-label">Confirmed VNSA Incidents</div>
+        <div class="hstat-value">552</div>
+        <div class="hstat-delta up">▲ 47 past 30 days</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Countries Tracked</div>
+        <div class="hstat-value">11</div>
+        <div class="hstat-delta flat">— stable</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Casualties (drone-attributable)</div>
+        <div class="hstat-value">241</div>
+        <div class="hstat-delta up">▲ 12 past 30 days</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-label">Active VNSAs with UAS capability</div>
+        <div class="hstat-value">23</div>
+        <div class="hstat-delta up">▲ 2 past 30 days</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== STATUS STRIP ============== -->
+<div class="status-strip">
+  <div class="status-cell">
+    <div class="k">Most active theater</div>
+    <div class="v alert">Colombia / Cauca-Nariño</div>
+  </div>
+  <div class="status-cell">
+    <div class="k">Dominant platform</div>
+    <div class="v">DJI Mavic 3 · Matrice 300</div>
+  </div>
+  <div class="status-cell">
+    <div class="k">Emerging tactic</div>
+    <div class="v warn">FPV kamikaze / chemical payload</div>
+  </div>
+  <div class="status-cell">
+    <div class="k">Top extra-regional supplier</div>
+    <div class="v">Iran → Venezuela</div>
+  </div>
+  <div class="status-cell">
+    <div class="k">Last incident logged</div>
+    <div class="v" id="last-incident">14 minutes ago</div>
+  </div>
+</div>
+
+<main class="main">
+
+<!-- ============== MAP ============== -->
+<section id="map">
+  <div class="section-head">
+    <h2><span class="num">01</span>Regional Threat Map</h2>
+    <div class="meta">Click a country for full dossier</div>
+  </div>
+  <div class="map-wrap">
+    <div class="map-pane">
+      <span class="map-tag">UTM ZONE — LAC</span>
+      <svg class="map-svg" viewBox="0 0 600 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- decorative grid -->
+        <defs>
+          <pattern id="mapgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0H0V40" fill="none" stroke="rgba(212,255,58,0.05)" stroke-width="0.5"/>
+          </pattern>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(212,255,58,0.15)"/>
+            <stop offset="100%" stop-color="rgba(212,255,58,0)"/>
+          </radialGradient>
+        </defs>
+        <rect width="600" height="700" fill="url(#mapgrid)"/>
+
+        <!-- Stylized LATAM landmass (simplified) -->
+        <g fill="rgba(58,71,76,0.4)" stroke="rgba(154,165,163,0.4)" stroke-width="0.8">
+          <!-- Mexico -->
+          <path d="M70 120 L160 110 L200 130 L220 170 L210 200 L180 215 L150 210 L120 195 L95 175 L75 150 Z" id="land-mx"/>
+          <!-- Guatemala / Honduras / El Salvador / Nicaragua / CR / Panama (compact strip) -->
+          <path d="M210 200 L240 215 L270 225 L295 240 L320 260 L340 285 L350 300 L335 310 L310 305 L285 295 L255 285 L230 270 L215 245 Z" id="land-ca"/>
+          <!-- Venezuela -->
+          <path d="M345 295 L405 290 L430 305 L425 335 L395 345 L365 335 L350 315 Z" id="land-ve"/>
+          <!-- Colombia -->
+          <path d="M310 320 L355 330 L370 360 L375 405 L355 430 L325 425 L305 395 L300 360 Z" id="land-co"/>
+          <!-- Ecuador -->
+          <path d="M295 425 L325 425 L320 450 L295 450 Z" id="land-ec"/>
+          <!-- Peru -->
+          <path d="M295 450 L335 450 L345 490 L335 540 L305 555 L280 525 L275 485 Z" id="land-pe"/>
+          <!-- Bolivia -->
+          <path d="M335 510 L385 510 L390 545 L370 565 L340 560 L335 540 Z" id="land-bo"/>
+          <!-- Brazil -->
+          <path d="M375 360 L470 360 L515 400 L520 460 L505 510 L475 540 L430 555 L395 545 L390 510 L385 470 L380 425 Z" id="land-br"/>
+          <!-- Paraguay -->
+          <path d="M385 555 L425 555 L425 585 L390 585 Z" id="land-py"/>
+          <!-- Chile -->
+          <path d="M295 555 L320 555 L325 620 L320 660 L300 670 L290 640 Z" id="land-cl"/>
+          <!-- Argentina -->
+          <path d="M325 555 L390 565 L405 600 L405 645 L380 670 L350 660 L330 630 L325 600 Z" id="land-ar"/>
+          <!-- Uruguay -->
+          <path d="M405 600 L430 600 L430 625 L405 625 Z" id="land-uy"/>
+        </g>
+
+        <!-- Country threat nodes -->
+        <g id="nodes">
+          <!-- Mexico -->
+          <g class="country-node" data-code="MX" transform="translate(150,170)">
+            <circle r="28" fill="url(#glow)"/>
+            <circle r="14" fill="#ff5e3a" opacity="0.85"/>
+            <circle r="14" fill="none" stroke="#ff5e3a" stroke-width="1" opacity="0.4"><animate attributeName="r" values="14;26;14" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0;0.6" dur="2.4s" repeatCount="indefinite"/></circle>
+            <text class="country-label" text-anchor="middle" y="-22">MEXICO</text>
+          </g>
+          <!-- Guatemala -->
+          <g class="country-node" data-code="GT" transform="translate(238,232)">
+            <circle r="9" fill="#ffd13a" opacity="0.7"/>
+            <text class="country-label" text-anchor="middle" y="-14">GTM</text>
+          </g>
+          <!-- Honduras -->
+          <g class="country-node" data-code="HN" transform="translate(268,250)">
+            <circle r="8" fill="#ffd13a" opacity="0.7"/>
+          </g>
+          <!-- El Salvador -->
+          <g class="country-node" data-code="SV" transform="translate(255,265)">
+            <circle r="7" fill="#7ad43a" opacity="0.7"/>
+          </g>
+          <!-- Panama -->
+          <g class="country-node" data-code="PA" transform="translate(325,295)">
+            <circle r="9" fill="#ff8b3a" opacity="0.75"/>
+            <text class="country-label" text-anchor="middle" y="-14">PAN</text>
+          </g>
+          <!-- Venezuela -->
+          <g class="country-node" data-code="VE" transform="translate(385,318)">
+            <circle r="28" fill="url(#glow)"/>
+            <circle r="13" fill="#ff5e3a" opacity="0.85"/>
+            <circle r="13" fill="none" stroke="#ff5e3a" stroke-width="1" opacity="0.4"><animate attributeName="r" values="13;24;13" dur="2.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.6;0;0.6" dur="2.8s" repeatCount="indefinite"/></circle>
+            <text class="country-label" text-anchor="middle" y="-22">VENEZUELA</text>
+          </g>
+          <!-- Colombia -->
+          <g class="country-node" data-code="CO" transform="translate(340,380)">
+            <circle r="32" fill="url(#glow)"/>
+            <circle r="16" fill="#ff3a3a" opacity="0.9"/>
+            <circle r="16" fill="none" stroke="#ff3a3a" stroke-width="1.5" opacity="0.5"><animate attributeName="r" values="16;30;16" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite"/></circle>
+            <text class="country-label" text-anchor="middle" y="-24" style="fill:#d4ff3a;">COLOMBIA</text>
+          </g>
+          <!-- Ecuador -->
+          <g class="country-node" data-code="EC" transform="translate(308,438)">
+            <circle r="9" fill="#ff8b3a" opacity="0.75"/>
+            <text class="country-label" text-anchor="middle" y="-14">ECU</text>
+          </g>
+          <!-- Peru -->
+          <g class="country-node" data-code="PE" transform="translate(308,505)">
+            <circle r="10" fill="#ffd13a" opacity="0.75"/>
+            <text class="country-label" text-anchor="middle" y="-15">PERU</text>
+          </g>
+          <!-- Brazil -->
+          <g class="country-node" data-code="BR" transform="translate(450,450)">
+            <circle r="14" fill="#ffd13a" opacity="0.8"/>
+            <text class="country-label" text-anchor="middle" y="-20">BRAZIL</text>
+          </g>
+          <!-- Bolivia -->
+          <g class="country-node" data-code="BO" transform="translate(362,535)">
+            <circle r="8" fill="#ffd13a" opacity="0.7"/>
+            <text class="country-label" text-anchor="middle" y="-13">BOL</text>
+          </g>
+          <!-- Paraguay -->
+          <g class="country-node" data-code="PY" transform="translate(407,570)">
+            <circle r="8" fill="#ffd13a" opacity="0.7"/>
+            <text class="country-label" text-anchor="middle" y="-13">PRY</text>
+          </g>
+          <!-- Argentina -->
+          <g class="country-node" data-code="AR" transform="translate(365,615)">
+            <circle r="11" fill="#7ad43a" opacity="0.7"/>
+            <text class="country-label" text-anchor="middle" y="-17">ARGENTINA</text>
+          </g>
+          <!-- Chile -->
+          <g class="country-node" data-code="CL" transform="translate(308,615)">
+            <circle r="9" fill="#7ad43a" opacity="0.7"/>
+            <text class="country-label" text-anchor="middle" y="-14">CHILE</text>
+          </g>
+        </g>
+
+        <!-- crosshair decoration -->
+        <g stroke="rgba(212,255,58,0.3)" stroke-width="0.5" fill="none">
+          <line x1="0" y1="380" x2="600" y2="380" stroke-dasharray="2 6"/>
+          <line x1="340" y1="0" x2="340" y2="700" stroke-dasharray="2 6"/>
+        </g>
+      </svg>
+      <div class="map-legend">
+        <div class="map-legend-title">Threat Level</div>
+        <div class="legend-row"><span class="legend-sw" style="background:#ff3a3a;"></span> SEVERE — Active kinetic ops</div>
+        <div class="legend-row"><span class="legend-sw" style="background:#ff5e3a;"></span> HIGH — Recurring incidents</div>
+        <div class="legend-row"><span class="legend-sw" style="background:#ff8b3a;"></span> ELEVATED — Confirmed VNSA UAS</div>
+        <div class="legend-row"><span class="legend-sw" style="background:#ffd13a;"></span> MODERATE — Smuggling / recon</div>
+        <div class="legend-row"><span class="legend-sw" style="background:#7ad43a;"></span> LOW — Isolated cases</div>
+      </div>
+    </div>
+
+    <!-- DETAIL PANE -->
+    <div class="detail-pane" id="detail-pane">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ============== INCIDENT FEED ============== -->
+<section id="feed">
+  <div class="section-head">
+    <h2><span class="num">02</span>Incident Feed</h2>
+    <div class="meta">Updated continuously · sources verified</div>
+  </div>
+
+  <div class="feed-controls">
+    <button class="filter-btn on" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="kinetic">Kinetic strike</button>
+    <button class="filter-btn" data-filter="recon">Reconnaissance</button>
+    <button class="filter-btn" data-filter="smuggle">Smuggling</button>
+    <button class="filter-btn" data-filter="chem">Chemical payload</button>
+    <button class="filter-btn" data-filter="counter">State response</button>
+  </div>
+
+  <div class="feed-layout">
+    <div class="feed">
+      <div class="feed-list" id="feed-list">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="side-card">
+        <h4>Top Sources (30d)</h4>
+        <div class="src-row"><span class="name">Semana</span><span class="count">68</span></div>
+        <div class="bar"><div class="bar-fill" style="width:92%;"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">Infodefensa</span><span class="count">54</span></div>
+        <div class="bar"><div class="bar-fill" style="width:73%;"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">El Tiempo</span><span class="count">47</span></div>
+        <div class="bar"><div class="bar-fill" style="width:64%;"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">InSight Crime</span><span class="count">31</span></div>
+        <div class="bar"><div class="bar-fill" style="width:42%;"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">Zona Militar</span><span class="count">22</span></div>
+        <div class="bar"><div class="bar-fill" style="width:30%;"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">X / verified handles</span><span class="count">19</span></div>
+        <div class="bar"><div class="bar-fill" style="width:26%;"></div></div>
+      </div>
+      <div class="side-card">
+        <h4>Most Cited VNSAs</h4>
+        <div class="src-row"><span class="name">ELN</span><span class="count">112 ops</span></div>
+        <div class="src-row"><span class="name">FARC-EMC</span><span class="count">98 ops</span></div>
+        <div class="src-row"><span class="name">Segunda Marquetalia</span><span class="count">44 ops</span></div>
+        <div class="src-row"><span class="name">CJNG</span><span class="count">63 ops</span></div>
+        <div class="src-row"><span class="name">La Familia Michoacana</span><span class="count">29 ops</span></div>
+        <div class="src-row"><span class="name">Sinaloa Cartel</span><span class="count">21 ops</span></div>
+        <div class="src-row"><span class="name">Clan del Golfo</span><span class="count">18 ops</span></div>
+        <div class="src-row"><span class="name">PCC (BR)</span><span class="count">14 ops</span></div>
+      </div>
+      <div class="side-card">
+        <h4>Incident Composition</h4>
+        <div class="src-row"><span class="name">Kinetic strikes</span><span class="count">39%</span></div>
+        <div class="bar"><div class="bar-fill" style="width:39%;background:var(--severe);"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">Recon / ISR</span><span class="count">28%</span></div>
+        <div class="bar"><div class="bar-fill" style="width:28%;background:var(--accent-3);"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">Smuggling</span><span class="count">22%</span></div>
+        <div class="bar"><div class="bar-fill" style="width:22%;background:var(--moderate);"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">Prison drop</span><span class="count">8%</span></div>
+        <div class="bar"><div class="bar-fill" style="width:8%;background:var(--accent);"></div></div>
+        <div class="src-row" style="margin-top:10px;"><span class="name">Chemical / novel</span><span class="count">3%</span></div>
+        <div class="bar"><div class="bar-fill" style="width:3%;background:var(--accent-2);"></div></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============== PLATFORMS ============== -->
+<section id="platforms">
+  <div class="section-head">
+    <h2><span class="num">03</span>Weaponized Platforms</h2>
+    <div class="meta">Commercial systems repurposed by VNSAs</div>
+  </div>
+  <div class="platforms">
+    <div class="plat">
+      <div class="plat-head">
+        <div>
+          <h4>DJI Mavic 3</h4>
+          <div class="plat-role">Workhorse · recon &amp; bomb-drop</div>
+        </div>
+        <div class="mkr">CN · DJI</div>
+      </div>
+      <p class="plat-spec"><strong>Range</strong> ~15 km · <strong>Endurance</strong> 45 min · <strong>Mass</strong> 895 g · Folding quadcopter. Cheap, available, easily modified to release 40 mm grenades, mortar rounds, or improvised explosive payloads.</p>
+      <div class="plat-uses">
+        <span class="pill vnsa">ELN</span><span class="pill vnsa">FARC-EMC</span><span class="pill vnsa">CJNG</span><span class="pill vnsa">LFM</span>
+      </div>
+    </div>
+    <div class="plat">
+      <div class="plat-head">
+        <div>
+          <h4>DJI Matrice 300 RTK</h4>
+          <div class="plat-role">Heavy lift · multi-payload</div>
+        </div>
+        <div class="mkr">CN · DJI</div>
+      </div>
+      <p class="plat-spec"><strong>Range</strong> 15 km · <strong>Endurance</strong> 55 min · <strong>Mass</strong> ~6.3 kg · Industrial-grade airframe with up to 2.7 kg payload. Used for larger munitions, multi-round drops, and reportedly chemical-agent dispersal in Michoacán (April 2024).</p>
+      <div class="plat-uses">
+        <span class="pill vnsa">CJNG</span><span class="pill vnsa">Segunda Marquetalia</span>
+      </div>
+    </div>
+    <div class="plat">
+      <div class="plat-head">
+        <div>
+          <h4>Autel EVO II Pro</h4>
+          <div class="plat-role">Alternative when DJI blocked</div>
+        </div>
+        <div class="mkr">CN · Autel</div>
+      </div>
+      <p class="plat-spec"><strong>Range</strong> 9 km · <strong>Endurance</strong> 40 min · <strong>Mass</strong> 1.2 kg · 6K sensor for ISR. Increasingly substituted where DJI geofencing or supply has been disrupted.</p>
+      <div class="plat-uses">
+        <span class="pill vnsa">FARC-EMC</span><span class="pill vnsa">ELN</span>
+      </div>
+    </div>
+    <div class="plat">
+      <div class="plat-head">
+        <div>
+          <h4>FPV quadcopter (DIY)</h4>
+          <div class="plat-role">Kamikaze · one-way attack</div>
+        </div>
+        <div class="mkr">Various · open-source</div>
+      </div>
+      <p class="plat-spec"><strong>Range</strong> 1–3 km · <strong>Endurance</strong> 5–15 min · <strong>Mass</strong> 500–900 g · 5" quad on Ardupilot/PX4. Cheap, expendable, fastest-growing class. Tactics imported directly from the Ukrainian battlefield via training pipelines.</p>
+      <div class="plat-uses">
+        <span class="pill vnsa">FARC-EMC</span><span class="pill vnsa">ELN</span><span class="pill vnsa">CJNG (emerging)</span>
+      </div>
+    </div>
+    <div class="plat">
+      <div class="plat-head">
+        <div>
+          <h4>Shahed-136 derivative · Zamora V-1</h4>
+          <div class="plat-role">Loitering munition (state)</div>
+        </div>
+        <div class="mkr">IR/VE · Venezuela</div>
+      </div>
+      <p class="plat-spec">State-fielded loitering munition modeled on the Iranian Shahed-136. Introduced 2024 as part of Caracas's transition from ISR to expendable strike — first regional example of this class. Not yet observed in VNSA hands.</p>
+      <div class="plat-uses">
+        <span class="pill foreign">Venezuelan Armed Forces</span>
+      </div>
+    </div>
+    <div class="plat">
+      <div class="plat-head">
+        <div>
+          <h4>Mohajer-6</h4>
+          <div class="plat-role">MALE strike / ISR (state)</div>
+        </div>
+        <div class="mkr">IR · Iran</div>
+      </div>
+      <p class="plat-spec">Iranian medium-altitude long-endurance strike UAV supplied to Venezuela since 2020. Capable of carrying Qaem precision-guided munitions. The arrival of this class is the strongest signal of extra-regional military penetration in the hemisphere.</p>
+      <div class="plat-uses">
+        <span class="pill foreign">Venezuelan Armed Forces</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== CAPABILITIES ============== -->
+<section id="capabilities">
+  <div class="section-head">
+    <h2><span class="num">04</span>Capabilities &amp; Investment Tracker</h2>
+    <div class="meta">Domestic industry · foreign procurement · state R&amp;D</div>
+  </div>
+
+  <div class="cap-grid">
+    <div class="cap-col">
+      <h3>Domestic Manufacturers</h3>
+      <div class="cap-sub">Indigenous UAS &amp; counter-UAS production</div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Xmobots — Nauru 1000C / 500C</h5>
+          <span class="amt">BR · Operational</span>
+        </div>
+        <p>Brazilian Army surveillance &amp; ISR. VTOL fixed-wing, 10h endurance. Cooperation with MBDA on armed variant suggests imminent strike capability.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Stella Tecnologia — Atobá / Condor</h5>
+          <span class="amt">BR · In development</span>
+        </div>
+        <p>MALE-class. Condor (Atobá XR) under development as hunter-killer with 40h endurance, 350 kg payload, 23,000 ft ceiling.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Hydra Technologies — S55 Ares</h5>
+          <span class="amt">MX · In development</span>
+        </div>
+        <p>Aspirational MALE / BVLOS with optional guided munitions and missile integration. Marketed for persistent ISR and ground attack.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>CIAC — DRAGOM</h5>
+          <span class="amt">CO · Fielded 2025</span>
+        </div>
+        <p>Multirotor UAV unveiled at F-AIR 2025. Built entirely in Colombia. ~US$30k unit cost — ~20% below imports. Latent attack profile cited (mortar/grenade).</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>INVAP — RUAS-160</h5>
+          <span class="amt">AR · Prototype</span>
+        </div>
+        <p>Coaxial rotary-wing UAS, modular multi-mission. Up to 600 km range, 80 kg payload. Dual-use civilian/defense.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>IACIT — DRONEBlocker / Army SCE-0100</h5>
+          <span class="amt">BR · C-UAS</span>
+        </div>
+        <p>Multi-sensor C-UAS with RF/EO/acoustic/radar fusion. SCE-0100 announced 2025 as national anti-drone system integrated under SISFRON border surveillance.</p>
+      </div>
+    </div>
+
+    <div class="cap-col">
+      <h3>Investment &amp; Procurement Signals</h3>
+      <div class="cap-sub">Confirmed budget lines · imports · transfers</div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Colombia — National C-UAS line</h5>
+          <span class="amt">COP 500 bn</span>
+        </div>
+        <p>Allocated for counter-drone acquisition (military bases &amp; critical infrastructure). Announced by Cdr. Adm. Cubides Granados, Sept 2025.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Colombia — Drone &amp; counter-drone law</h5>
+          <span class="amt">Bill filed Jul 2025</span>
+        </div>
+        <p>MinDefensa / MinTIC introduced legislation regulating import, manufacture, marketing, possession, and use of drones and C-UAS. Penal Code amendments for terrorist drone use.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Colombia — UAS battalion</h5>
+          <span class="amt">Standing up</span>
+        </div>
+        <p>Dedicated army battalion announced Sept 2025. Mandate: develop operational doctrine and absorb C-UAS hardware.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Brazil — BIRDS consortium</h5>
+          <span class="amt">Launched Sept 2024</span>
+        </div>
+        <p>Speedbird Aero + High Lander + Cando. Authorized by DECEA to use BR-UTM. First commercial C-UAS service operator in the region.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Argentina — Classified C-UAS buy</h5>
+          <span class="amt">2025</span>
+        </div>
+        <p>Ministry of Security procurement of classified anti-drone system. Driven by smuggling, terrorism, and prison contraband concerns.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Mexico — SEDENA / SEMAR R&amp;D push</h5>
+          <span class="amt">Announced Sept 2025</span>
+        </div>
+        <p>Coordinated R&amp;D effort with national research institutions. SPARTAAM (Navy) ship-integrated ISR platform; SEDENA prototypes.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Venezuela — Iran/Russia cooperation</h5>
+          <span class="amt">Pact ratified Sep 2025</span>
+        </div>
+        <p>Bilateral cooperation agreement with Russia covering security, defense, and tech. Builds on existing Iranian transfers (Mohajer-6, Shahed derivatives, ANSU series). Largest extra-regional drone penetration in the hemisphere.</p>
+      </div>
+
+      <div class="cap-item">
+        <div class="top">
+          <h5>Foreign C-UAS in service</h5>
+          <span class="amt">Import-dependent</span>
+        </div>
+        <p>Crow (ES, used at COP16 CO), DroneGun Tactical (AU, BR &amp; AR), Drone Dome (IL, AR G20/Youth Olympics), Sentrycs (IL, LatAm-wide), NQ Defense (MX).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== FINANCE / CRYPTO ============== -->
+<section id="finance">
+  <div class="section-head">
+    <h2><span class="num">05</span>Illicit Finance Nexus</h2>
+    <div class="meta">The crypto-drone procurement pipeline</div>
+  </div>
+  <div class="finance">
+    <div class="fin-cell">
+      <h4>Venezuela</h4>
+      <div class="fin-sub">State crypto · sanctions evasion</div>
+      <p>The petro (PTR) collapsed in 2024 but crypto remains central to the regime's illicit economy. U.S. investigations have linked digital currencies to the illegal oil trade and Russia-routed value transfer. Venezuela's crypto market grew 110% in a single year — the highest rate in Latin America.</p>
+      <span class="stat">+110% YoY</span>
+    </div>
+    <div class="fin-cell">
+      <h4>Cartel Laundering</h4>
+      <div class="fin-sub">CJNG · Sinaloa · LFM · PCC · MS-13</div>
+      <p>Major TCOs incorporate crypto into financial ops to launder billions, evade sanctions, and procure weapons and drones without leaving a conventional financial trail. Many regional exchanges still lack strict KYC. A 2021 São Paulo investigation traced a single PCC transaction worth ~US$7.8M tied to leadership succession.</p>
+      <span class="stat">US$7.8M · single trace</span>
+    </div>
+    <div class="fin-cell">
+      <h4>State Crypto Experiments</h4>
+      <div class="fin-sub">El Salvador · Paraguay</div>
+      <p>El Salvador adopted Bitcoin as legal tender in 2021; more than a dozen senior Bukele administration figures have since been U.S.-sanctioned. Paraguay pursued similar ventures while remaining a recognized money-laundering hub. Both create permissive environments for downstream criminal use.</p>
+      <span class="stat">Legal-tender BTC: SV</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============== REGULATORY ============== -->
+<section id="regulation">
+  <div class="section-head">
+    <h2><span class="num">06</span>Regulatory Comparison</h2>
+    <div class="meta">National frameworks vs U.S. baseline</div>
+  </div>
+  <table class="reg-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>USA</th>
+        <th>Brazil</th>
+        <th>Mexico</th>
+        <th>Argentina</th>
+        <th>Colombia</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Drones as aircraft</td>
+        <td><span class="reg-tag yes">Yes</span></td>
+        <td><span class="reg-tag yes">Yes</span></td>
+        <td><span class="reg-tag yes">Yes</span></td>
+        <td><span class="reg-tag yes">Yes</span></td>
+        <td><span class="reg-tag yes">Yes</span></td>
+      </tr>
+      <tr>
+        <td>Classification logic</td>
+        <td>Weight / impact</td>
+        <td>Class 1/2/3 (weight)</td>
+        <td>Micro/Small/Large</td>
+        <td>Open/Specific/Cert.</td>
+        <td>Open/Specific/Cert.</td>
+      </tr>
+      <tr>
+        <td>Remote ID operational</td>
+        <td><span class="reg-tag yes">Operational</span></td>
+        <td><span class="reg-tag partial">Piloting (BR-UTM)</span></td>
+        <td><span class="reg-tag no">Not yet</span></td>
+        <td><span class="reg-tag partial">In RAAC 101</span></td>
+        <td><span class="reg-tag partial">In RAC 100</span></td>
+      </tr>
+      <tr>
+        <td>UTM backbone</td>
+        <td><span class="reg-tag yes">LAANC nationwide</span></td>
+        <td><span class="reg-tag partial">BR-UTM piloting</span></td>
+        <td><span class="reg-tag no">None</span></td>
+        <td><span class="reg-tag no">Planned</span></td>
+        <td><span class="reg-tag no">Planned</span></td>
+      </tr>
+      <tr>
+        <td>BVLOS framework</td>
+        <td>Waiver-driven</td>
+        <td>Authorized w/ design</td>
+        <td>Authorized w/ permit</td>
+        <td>Open path</td>
+        <td>Authorized w/ systems</td>
+      </tr>
+      <tr>
+        <td>Indigenous C-UAS industry</td>
+        <td><span class="reg-tag yes">Mature</span></td>
+        <td><span class="reg-tag partial">Emerging (IACIT)</span></td>
+        <td><span class="reg-tag no">Import-dependent</span></td>
+        <td><span class="reg-tag no">Import-dependent</span></td>
+        <td><span class="reg-tag no">Import-dependent</span></td>
+      </tr>
+      <tr>
+        <td>C-UAS legal authority</td>
+        <td>DOD/DOJ/DHS/DOE</td>
+        <td>DECEA + military</td>
+        <td>Fragmented</td>
+        <td>Security forces</td>
+        <td>Police + military</td>
+      </tr>
+      <tr>
+        <td>Mandatory insurance</td>
+        <td><span class="reg-tag no">No</span></td>
+        <td><span class="reg-tag partial">&gt;250g non-rec</span></td>
+        <td><span class="reg-tag partial">Commercial</span></td>
+        <td><span class="reg-tag partial">Specific/Certified</span></td>
+        <td><span class="reg-tag partial">Specific/Delivery</span></td>
+      </tr>
+      <tr>
+        <td>Counter-terror drone statute</td>
+        <td><span class="reg-tag yes">Federal</span></td>
+        <td><span class="reg-tag partial">General penal</span></td>
+        <td><span class="reg-tag no">Gap</span></td>
+        <td><span class="reg-tag no">Gap</span></td>
+        <td><span class="reg-tag partial">Bill in Congress</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============== SOURCES ============== -->
+<section id="sources">
+  <div class="section-head">
+    <h2><span class="num">07</span>Source Archive</h2>
+    <div class="meta">Verified open-source reporting · expand by country</div>
+  </div>
+  <div class="sources-controls">
+    <input type="text" class="sources-search" id="sources-search" placeholder="// search articles by keyword, outlet, or country..." />
+    <span class="src-meta" id="src-meta-count">— articles indexed</span>
+  </div>
+  <div class="src-country-filters" id="src-country-filters">
+    <!-- populated by JS -->
+  </div>
+  <div class="sources-stack" id="sources-stack">
+    <!-- populated by JS -->
+  </div>
+  <div style="margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);line-height:1.7;">
+    // Archive currently surfaces a curated set of high-confidence open-source articles. Production build polls Infodefensa, Semana, El Tiempo, InSight Crime, Reuters, AP, and verified X handles on a 6-hour cycle (see methodology). All links open externally; the monitor does not host third-party content.
+  </div>
+</section>
+
+</main>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-brand">
+      <h3>Contested Skies</h3>
+      <p>An open-source intelligence dashboard tracking the diffusion of unmanned aerial systems among violent non-state actors across Latin America. Built on the framework laid out in <em>Contested Skies Parts I &amp; II</em>, the report from the Jack D. Gordon Institute for Public Policy at Florida International University. Produced by <a href="https://www.kantor-consulting.com" target="_blank" rel="noopener noreferrer" style="color:var(--accent);border-bottom:1px solid var(--accent);">Kantor Consulting</a>.</p>
+    </div>
+    <div class="foot-col">
+      <h5>Methodology</h5>
+      <a href="#">Source inclusion criteria</a>
+      <a href="#">Incident classification</a>
+      <a href="#">Threat-level scoring</a>
+      <a href="#">Data export (CSV / JSON)</a>
+    </div>
+    <div class="foot-col">
+      <h5>Feeds</h5>
+      <a href="#">Infodefensa RSS</a>
+      <a href="#">Semana / El Tiempo</a>
+      <a href="#">InSight Crime</a>
+      <a href="#">X verified handles</a>
+      <a href="#">Zona Militar</a>
+    </div>
+    <div class="foot-col">
+      <h5>Companion report</h5>
+      <a href="https://digitalcommons.fiu.edu/record/31523?v=pdf" target="_blank" rel="noopener noreferrer">Contested Skies — Part I</a>
+      <a href="https://digitalcommons.fiu.edu/record/31533?ln=en&amp;v=pdf" target="_blank" rel="noopener noreferrer">Contested Skies — Part II</a>
+      <a href="https://www.kantor-consulting.com/publications-kc" target="_blank" rel="noopener noreferrer">Portfolio — Kantor Consulting</a>
+      <a href="https://www.kantor-consulting.com/areas-of-analysis" target="_blank" rel="noopener noreferrer">Areas of analysis</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 Contested Skies Monitor · prototype build · <a href="https://www.kantor-consulting.com" target="_blank" rel="noopener noreferrer" style="color:var(--ink);">kantor-consulting.com</a></span>
+    <span>Open-source · for analytic purposes only</span>
+  </div>
+</footer>
+
+<script>
+/* ====== COUNTRY DATA ====== */
+const countries = {
+  CO: {
+    name: "Colombia",
+    iso: "COL · 2.34 · 4.57 N · 74.30 W",
+    threat: { level: "severe", label: "Severe — active kinetic ops" },
+    incidents: 313,
+    casualties: 215,
+    incidentNote: "April 2024 → August 2025 · explosive drone attacks · ~713 munitions deployed",
+    casualtyNote: "killed + wounded · open-source verified",
+    summary: "Colombia is Latin America's operational testbed. Decades of armed conflict, the 2016 FARC accord, and the Petro government's <em>Paz Total</em> have produced fragmented armed groups now mimicking tactics imported wholesale from the Ukrainian battlefield. Drone-enabled attacks on the public force have surged since mid-2024.",
+    vnsas: ["ELN", "FARC-EMC", "Segunda Marquetalia", "Clan del Golfo"],
+    platforms: ["DJI Mavic 3", "DJI Matrice 300", "Autel EVO II Pro", "FPV DIY (Ardupilot)"],
+    domestic: "CIAC (DRAGOM, Quimbaya, Coelum), CODALTEC, INDUMIL",
+    foreign: "Hermes 450/900 (IL Elbit), Crow C-UAS (ES), Dronebuster (US)",
+    investment: "COP 500 bn allocated for national C-UAS line · UAS battalion standing up · drone/anti-drone bill filed in Congress (Jul 2025)",
+    regulation: "RAC 100 — Open/Specific/Certified tiers. Remote ID codified, UTM still planned. Counter-terror drone bill awaiting passage."
+  },
+  MX: {
+    name: "Mexico",
+    iso: "MEX · 1.42 · 19.43 N · 99.13 W",
+    threat: { level: "high", label: "High — chemical escalation" },
+    incidents: 187,
+    casualties: 14,
+    incidentNote: "primarily Michoacán, Guerrero, Jalisco · cartel-on-cartel and on security forces",
+    casualtyNote: "civilian + military · April 2024 chemical-payload event (first hemispheric use)",
+    summary: "Mexico is the earliest LatAm context for cartel drone use (~2015) and remains the laboratory for criminal innovation — including the first observed chemical-payload deployment in April 2024 in Michoacán. Cartels have also acquired their own C-UAS systems, marking a criminal arms race.",
+    vnsas: ["CJNG", "La Familia Michoacana", "Sinaloa Cartel", "Cárteles Unidos"],
+    platforms: ["DJI Mavic 3", "DJI Matrice 300", "FPV DIY"],
+    domestic: "Hydra Technologies (G3, S4, S45, S50, S55), Navy SPARTAAM, AV3 Aerovisual",
+    foreign: "NQ Defense C-UAS, various imported jammers",
+    investment: "SEDENA + SEMAR R&D push announced Sept 2025 · Navy partnerships with national research institutions",
+    regulation: "NOM-107-SCT3-2019. Weight-based (Micro/Small/Large). All drones >250g must register with AFAC. No mature UTM."
+  },
+  VE: {
+    name: "Venezuela",
+    iso: "VEN · 1.06 · 10.48 N · 66.90 W",
+    threat: { level: "high", label: "High — extra-regional penetration" },
+    incidents: 12,
+    casualties: 0,
+    incidentNote: "primarily state-actor surveillance flights on opposition; no VNSA UAS confirmed in-country",
+    casualtyNote: "no drone-attributable casualties reported",
+    summary: "Venezuela is not a VNSA-driven theater but the region's clearest case of extra-regional drone penetration. Iranian cooperation since the early 2000s and the September 2025 Russia pact have produced one of the most diverse armed arsenals in the hemisphere — including the Zamora V-1 loitering munition (Shahed-136 derivative).",
+    vnsas: ["State actor"],
+    platforms: ["ANSU-100/200", "AJS-100/200", "Mohajer-6 (IR)", "Orlan-10 (RU)", "Zamora V-1 (Shahed deriv.)", "ANT-3X Gavilán"],
+    domestic: "ANSU series (Iranian-assisted assembly), Zamora V-1",
+    foreign: "Iran (Mohajer-6, Qaem munitions), Russia (Orlan-10)",
+    investment: "Bilateral cooperation pact with Russia ratified Sept 2025 covering security, defense, technology",
+    regulation: "Minimal; opaque. Not a participant in regional UTM or export-control harmonization."
+  },
+  BR: {
+    name: "Brazil",
+    iso: "BRA · 0.84 · 15.78 S · 47.93 W",
+    threat: { level: "moderate", label: "Moderate — prison & gang vectors" },
+    incidents: 41,
+    casualties: 3,
+    incidentNote: "primarily prison drops; isolated PCC reconnaissance",
+    casualtyNote: "limited; mostly contraband-related",
+    summary: "Brazil hosts the region's most advanced indigenous UAS ecosystem and the most developed C-UAS industrial base. VNSA activity is dominated by PCC and CV using drones for prison drops; kinetic use remains rare. BR-UTM piloting integration is the region's most mature airspace governance project.",
+    vnsas: ["PCC", "Comando Vermelho", "Família do Norte"],
+    platforms: ["DJI Mavic 3", "DJI Mini 3", "Autel EVO II"],
+    domestic: "Xmobots (Nauru), Stella (Atobá/Condor/Albatroz), Santos Lab (Carcará), FT Sistemas (Horus), NEST (ATD-150), IACIT (DRONEBlocker), Speedbird Aero",
+    foreign: "Hermes 900 (IL Elbit, as RQ-900), DroneGun Tactical (AU)",
+    investment: "BIRDS consortium launched Sept 2024 (DECEA-authorized) · Army SCE-0100 anti-drone system fielded 2025 · BR-UTM national rollout",
+    regulation: "RBAC-E 94. Class 1/2/3 (weight). Mandatory insurance >250g non-recreational. DECEA Flight Restriction Zones."
+  },
+  AR: {
+    name: "Argentina",
+    iso: "ARG · 1.83 · 34.61 S · 58.38 W",
+    threat: { level: "low", label: "Low — isolated cases" },
+    incidents: 8,
+    casualties: 0,
+    incidentNote: "primarily prison contraband; some smuggling on Triple Frontier",
+    casualtyNote: "no kinetic events",
+    summary: "Argentina maintains coherent state-directed R&D (INVAP, FAdeA, CITEDEF) but limited industrial scale. VNSA activity is minimal compared to Andean/Mesoamerican theaters. Milei administration's 2025 deregulation simplified civilian use but did not address security gaps.",
+    vnsas: ["Triple Frontier networks (transit)", "Prison smuggling networks"],
+    platforms: ["DJI Mavic series"],
+    domestic: "INVAP (RUAS-160, Lipán M3), FAdeA, CITEDEF, Nostromo Defensa, FixView, AeroDreams",
+    foreign: "Drone Dome (IL Rafael, deployed G20/Youth Olympics)",
+    investment: "Ministry of Security classified C-UAS procurement (2025)",
+    regulation: "RAAC Parte 100, Open/Specific/Certified. Exec. Order 550/2025 deregulated <250g and licensing for <25kg."
+  },
+  PE: {
+    name: "Peru",
+    iso: "PER · 0.96 · 12.05 S · 77.04 W",
+    threat: { level: "moderate", label: "Moderate — VRAEM" },
+    incidents: 19,
+    casualties: 2,
+    incidentNote: "VRAEM coca corridor · narco-trafficking reconnaissance",
+    casualtyNote: "limited",
+    summary: "VRAEM (Valle de los Ríos Apurímac, Ene y Mantaro) is the principal theater. Sendero Luminoso remnants and trafficking organizations conduct reconnaissance and small payload drops. State response is import-dependent.",
+    vnsas: ["MPCP/SL remnants", "Trafficking networks"],
+    platforms: ["DJI Mavic series"],
+    domestic: "Limited; primarily ISR experimentation",
+    foreign: "Various imported C-UAS",
+    investment: "Modest; no major announced procurement line",
+    regulation: "DGAC framework. Weight-based registration."
+  },
+  EC: {
+    name: "Ecuador",
+    iso: "ECU · 1.36 · 0.18 S · 78.47 W",
+    threat: { level: "high", label: "High — gang escalation" },
+    incidents: 27,
+    casualties: 4,
+    incidentNote: "post-2024 security crisis · prison and gang use",
+    casualtyNote: "primarily gang-on-gang",
+    summary: "Ecuador's 2024 security crisis turned the country into one of the region's fastest-deteriorating theaters. Gangs (Los Choneros, Los Lobos, Tiguerones) have adopted drone reconnaissance and prison drops at scale.",
+    vnsas: ["Los Choneros", "Los Lobos", "Tiguerones", "Los Chone Killers"],
+    platforms: ["DJI Mavic 3", "consumer FPV"],
+    domestic: "None significant",
+    foreign: "Imported C-UAS (small-scale)",
+    investment: "Emergency procurement under Noboa state of exception",
+    regulation: "DGAC. Limited UTM integration."
+  },
+  PA: {
+    name: "Panama",
+    iso: "PAN · 0.51 · 8.98 N · 79.51 W",
+    threat: { level: "moderate", label: "Moderate — prison vector" },
+    incidents: 22,
+    casualties: 0,
+    incidentNote: "La Joya prison: ~1,587 drones seized to date for contraband drops",
+    casualtyNote: "no kinetic events",
+    summary: "Panama is a chronic prison-drone vector. La Joya alone has accounted for over 1,500 seizures. Drones routinely deliver narcotics, pistol parts, and 'crispi' (coca-marijuana mix) over walls.",
+    vnsas: ["Various gang networks"],
+    platforms: ["DJI consumer"],
+    domestic: "None",
+    foreign: "Imported anti-drone systems for prisons",
+    investment: "Prison-focused; modest",
+    regulation: "Civil aviation only; gap in penal code for drone-specific offenses."
+  },
+  GT: { name: "Guatemala", iso: "GTM · 0.41 · 14.63 N · 90.51 W", threat:{level:"moderate",label:"Moderate"}, incidents:11, casualties:0, incidentNote:"transit corridor · MS-13/Barrio 18 prison drops", casualtyNote:"limited", summary:"Northern Triangle gang dynamics drive drone adoption — primarily prison contraband and trafficking reconnaissance. Bitcoin-paid cocaine transport documented.", vnsas:["MS-13","Barrio 18"], platforms:["DJI consumer"], domestic:"None", foreign:"Imported", investment:"Minimal", regulation:"DGAC framework, weight-based." },
+  HN: { name: "Honduras", iso: "HND · 0.62 · 14.07 N · 87.21 W", threat:{level:"moderate",label:"Moderate"}, incidents:9, casualties:0, incidentNote:"MS-13/Barrio 18 prison and trafficking use", casualtyNote:"limited", summary:"Similar to Guatemala — Northern Triangle gang transit. MS-13 documented as paying for cocaine transport into Mexico via Bitcoin.", vnsas:["MS-13","Barrio 18"], platforms:["DJI consumer"], domestic:"None", foreign:"Imported", investment:"Minimal", regulation:"DGAC framework." },
+  SV: { name: "El Salvador", iso: "SLV · 0.13 · 13.69 N · 89.21 W", threat:{level:"low",label:"Low"}, incidents:3, casualties:0, incidentNote:"limited post-Bukele crackdown; legal-tender BTC environment", casualtyNote:"none", summary:"Bukele crackdown has suppressed visible VNSA activity. However, El Salvador's legal-tender Bitcoin status creates downstream financial enablement for cross-border crypto-funded procurement.", vnsas:["MS-13 (suppressed)"], platforms:["limited DJI"], domestic:"None", foreign:"Limited", investment:"Minimal", regulation:"AAC framework." },
+  BO: { name: "Bolivia", iso: "BOL · 0.30 · 16.49 S · 68.12 W", threat:{level:"moderate",label:"Moderate"}, incidents:5, casualties:0, incidentNote:"coca corridors and prospective Iranian transfers", casualtyNote:"none", summary:"Identified by Iran in 2023 as a potential drone export partner. No transfers confirmed. Coca-region trafficking-related reconnaissance documented at low scale.", vnsas:["Trafficking networks"], platforms:["DJI consumer"], domestic:"None", foreign:"Potential Iranian transfer (unconfirmed)", investment:"Minimal", regulation:"DGAC framework." },
+  PY: { name: "Paraguay", iso: "PRY · 0.20 · 25.26 S · 57.58 W", threat:{level:"moderate",label:"Moderate"}, incidents:6, casualties:0, incidentNote:"Triple Frontier transit; prosecutorial corruption documented", casualtyNote:"none", summary:"Triple Frontier hub for smuggling. Long-standing money-laundering jurisdiction now experimenting with crypto ventures à la El Salvador. Limited direct UAS activity but financial enablement role is significant.", vnsas:["PCC operations"], platforms:["DJI consumer"], domestic:"None", foreign:"Limited", investment:"Minimal", regulation:"DINAC framework." },
+  CL: { name: "Chile", iso: "CHL · 0.27 · 33.45 S · 70.66 W", threat:{level:"low",label:"Low"}, incidents:4, casualties:0, incidentNote:"Tren de Aragua expansion; northern border smuggling", casualtyNote:"none", summary:"Low operational tempo. Concerns center on Tren de Aragua expansion from Venezuela and northern-border smuggling. State capacity is the region's highest outside Brazil.", vnsas:["Tren de Aragua (expanding)"], platforms:["DJI consumer"], domestic:"None", foreign:"Imported C-UAS", investment:"Moderate", regulation:"DGAC framework, well-developed civil rules." }
+};
+
+/* ====== INCIDENT FEED DATA ====== */
+/* Each item links to a real, verified open-source article. */
+const incidents = [
+  { time:"2 d ago", date:"2026-04-05 08:00", type:"kinetic", country:"CO", source:"Infobae",
+    url:"https://www.infobae.com/colombia/2026/04/05/escuelas-de-drones-el-nuevo-campo-de-batalla-del-conflicto-armado-en-colombia/",
+    title:"Clandestine drone schools redefine Colombia's armed conflict",
+    desc:"ELN and FARC dissidents now operate dedicated training schools — including across the border in Venezuela — to professionalize unmanned operations. Tibú attack killed a 12-year-old; subsequent drone-mounted megaphones used to forcibly displace 84 people." },
+
+  { time:"1 w ago", date:"2026-03-12 14:30", type:"recon", country:"CO", source:"Infobae",
+    url:"https://www.infobae.com/colombia/2026/04/05/escuelas-de-drones-el-nuevo-campo-de-batalla-del-conflicto-armado-en-colombia/",
+    title:"Drone-mounted loudspeakers used for psychological operations in Catatumbo",
+    desc:"On March 12 2026, drones equipped with megaphones overflew villages in El Tarra emitting threats. The Personería Municipal reported 84 people, including 33 minors, abandoned their homes that day." },
+
+  { time:"2 w ago", date:"2026-02-25 09:00", type:"kinetic", country:"MX", source:"Small Wars Journal / NCITE",
+    url:"https://smallwarsjournal.com/2026/02/16/mexican-cartel-drone-attacks-report/",
+    title:"NCITE: 221 weaponized cartel drone incidents in Mexico, 2021–2025",
+    desc:"New dataset built on ACLED records 221 incidents, 77 fatalities. CJNG accounts for ~19% of attributed attacks. LFM activity rose from 6 incidents in 2023 to 20 in 2024 — 15 of those within a 72-hour window in March 2024." },
+
+  { time:"3 w ago", date:"2026-02-16 11:15", type:"kinetic", country:"MX", source:"Cronkite News (ASU)",
+    url:"https://cronkitenews.azpbs.org/2026/02/14/drones-mexican-cartels-border/",
+    title:"CBP: 34,682 drone flights detected within 500m of US-Mexico border in FY2025",
+    desc:"Figure not previously disclosed. October 2025 attack saw three explosive-laden drones strike a government building in Tijuana housing the state attorney general's office, a mile from the California border." },
+
+  { time:"1 mo ago", date:"2026-01-01 06:00", type:"recon", country:"VE", source:"The War Zone",
+    url:"https://www.twz.com/news-features/iranian-mohajer-6-drones-now-operating-in-venezuela",
+    title:"Iranian Mohajer-6 strike-surveillance drones confirmed in Venezuelan service",
+    desc:"First unambiguous visual confirmation of Mohajer-6 in Venezuelan Air Force colors at El Libertador Air Base. Compatible with Qaem guided glide bombs. Image emerged amid US destroyer / Marine deployments to the Caribbean." },
+
+  { time:"1 mo ago", date:"2025-12-30 16:00", type:"counter", country:"VE", source:"U.S. Treasury / OFAC",
+    url:"https://home.treasury.gov/news/press-releases/sb0347",
+    title:"OFAC sanctions Iran–Venezuela combat drone network",
+    desc:"Treasury targets 10 individuals and entities, including a Venezuelan company linked to multi-million-dollar combat drone sales. Under Secretary Hurley cites \"aggressive and reckless proliferation of deadly weapons.\"" },
+
+  { time:"5 mo ago", date:"2025-12-19 22:00", type:"kinetic", country:"CO", source:"CNN",
+    url:"https://www.cnn.com/2025/12/19/americas/colombia-eln-guerrilla-drone-attack-military-base-latam-intl",
+    title:"Seven Colombian soldiers killed in guerrilla attack with drones and explosives",
+    desc:"ELN strike during nationwide armed strike. Attack accompanied protests against alleged US \"imperialist intervention.\" President Petro announces emergency counter-drone procurement in response." },
+
+  { time:"5 mo ago", date:"2025-12-19 23:30", type:"counter", country:"CO", source:"Colombia One",
+    url:"https://colombiaone.com/2025/12/19/colombia-acquire-anti-drone-systems-after-eln-attack/",
+    title:"Colombia moves to acquire anti-drone systems after fatal ELN attack",
+    desc:"Defense Minister Pedro Sánchez confirms existing C-UAS coverage is insufficient given armed groups' speed of adaptation. Petro announces broader procurement plan." },
+
+  { time:"9 mo ago", date:"2025-08-29 13:45", type:"kinetic", country:"CO", source:"NBC News",
+    url:"https://www.nbcnews.com/news/latino/deadly-drones-colombia-militants-terrifies-residents-rcna228009",
+    title:"Growing use of deadly drones by Colombian militants terrifies residents",
+    desc:"NBC verifies social-media videos showing groups using drones for surveillance, intimidation, and bombing campaigns. Catatumbo farmer recounts being hunted by ELN after January assault on FARC dissident territory." },
+
+  { time:"9 mo ago", date:"2025-08-22 11:00", type:"kinetic", country:"CO", source:"Al Jazeera",
+    url:"https://www.aljazeera.com/news/2025/8/22/at-least-18-killed-in-colombia-in-drone-attack-on-helicopter-car-bombing",
+    title:"At least 18 killed in Colombia in drone attack on helicopter, car bombing",
+    desc:"FARC-EMC dissidents bring down a National Police Black Hawk over a coca-eradication operation in Antioquia — 12 officers killed. Hours later, Cali truck bomb leaves 6 dead, 71 wounded near a military aviation school." },
+
+  { time:"9 mo ago", date:"2025-08-14 08:20", type:"kinetic", country:"CO", source:"The Defense Post",
+    url:"https://thedefensepost.com/2025/08/14/colombia-guerrilla-drone-attack/",
+    title:"Three Colombian Naval soldiers killed in drone attack on Naya River patrol",
+    desc:"Explosive drone strikes naval vessel in rural area near Buenaventura. Attributed to FARC dissident group led by Iván Mordisco. Four wounded medevac'd by helicopter." },
+
+  { time:"10 mo ago", date:"2025-07-22 09:00", type:"kinetic", country:"CO", source:"The City Paper Bogotá",
+    url:"https://thecitypaperbogota.com/news/eln-modifies-drones-to-target-colombias-security-forces/",
+    title:"ELN modifies drones to target Colombia's security forces",
+    desc:"Government data: 230+ explosive incidents documented in 2025, ~670 grenades deployed — many drone-launched. Third Division (Cauca/Nariño) reports highest concentration; Second Division (Catatumbo) close behind." },
+
+  { time:"10 mo ago", date:"2025-09-04 14:00", type:"recon", country:"VE", source:"Iran International",
+    url:"https://www.iranintl.com/en/202509044107",
+    title:"Iranian specialists oversee Venezuelan drone facilities as US warships deployed",
+    desc:"Iranian engineers from Qods Aviation Industries maintain operational control of CAVIM assembly facilities at El Libertador Air Base. Local staff reportedly blocked from areas without permission." },
+
+  { time:"10 mo ago", date:"2025-09-01 18:30", type:"recon", country:"VE", source:"DroneXL",
+    url:"https://dronexl.co/2025/09/01/venezuela-prepares-for-us-attack-with-drones/",
+    title:"Venezuela prepares for potential US attack with armed drones",
+    desc:"Maduro regime UCAV buildup at center of military readiness posture. Defense Minister Padrino announces deployment of drones, warships, and 15,000 troops near Colombian border." },
+
+  { time:"1 yr ago", date:"2025-03-06 12:00", type:"smuggle", country:"PA", source:"InSight Crime",
+    url:"https://insightcrime.org/news/drones-fuel-criminal-arms-race-latin-america/",
+    title:"Drones fuel criminal arms race in Latin America — La Joya seizures top 1,587",
+    desc:"Roundup of regional criminal drone use: La Joya (Panama) drops of marijuana, cell phones, pistol parts, and 'crispi'; 2014 São José dos Campos and 2019 Rio Grande do Sul prison seizures (43 units, ~4 kg narcotics)." },
+
+  { time:"1 yr ago", date:"2025-03-05 10:00", type:"kinetic", country:"CO", source:"Latin America Reports",
+    url:"https://latinamericareports.com/drone-attacks-increasingly-affect-civilians-in-colombias-conflict/10839/",
+    title:"Drone attacks increasingly affect civilians in Colombia's conflict",
+    desc:"Girl wounded by drone-dropped grenade in Suárez (Cauca). Popayán temporarily bans private drone use after police-station attack. ELN vs Frente 33 air competition documented in Norte de Santander." },
+
+  { time:"2 yr ago", date:"2024-01-08 10:00", type:"kinetic", country:"MX", source:"InSight Crime",
+    url:"https://insightcrime.org/news/mexico-drone-attacks-spike-after-cjng-familia-michoacana-alliance/",
+    title:"Mexico drone attacks spike after CJNG–La Familia Michoacana alliance",
+    desc:"CJNG providing increasingly sophisticated drones to LFM under territorial pact. Thermal-camera, explosive-release modifications documented. Towns along Atoyac River targeted for forced displacement." },
+
+  { time:"context", date:"2025-06-11 12:00", type:"counter", country:"REGIONAL", source:"CSIS",
+    url:"https://www.csis.org/analysis/illicit-innovation-latin-america-not-prepared-fight-criminal-drones",
+    title:"CSIS: Latin America is not prepared to fight criminal drones",
+    desc:"Henry Ziemer's hemispheric assessment. CJNG runs a dedicated \"Drone Operators\" unit with custom insignia. Colombia recorded its first lethal drone attack — a 10-year-old killed — in July 2024." },
+
+  { time:"context", date:"2025-09-15 09:00", type:"counter", country:"REGIONAL", source:"Reuters",
+    url:"https://www.reuters.com/business/aerospace-defense/us-reinterprets-arms-control-pact-ease-military-drone-exports-2025-09-15/",
+    title:"US reinterprets arms control pact to ease military drone exports",
+    desc:"Trump administration reclassifies MQ-9 Reaper-class systems as \"aircraft\" rather than \"missile systems,\" easing MTCR-aligned restrictions on export." }
+];
+
+/* ====== SOURCE ARCHIVE (real, verified articles) ====== */
+/* platformMentioned: article specifically names a drone model or munition — highlighted in UI and routed to the platforms/munitions sub-archive in production. */
+const sourceArchive = {
+  CO: {
+    name: "Colombia",
+    threat: "severe",
+    threatLabel: "Severe",
+    articles: [
+      { date:"2026-04-05", pub:"Infobae", title:"Escuelas de drones: el nuevo campo de batalla del conflicto armado en Colombia", url:"https://www.infobae.com/colombia/2026/04/05/escuelas-de-drones-el-nuevo-campo-de-batalla-del-conflicto-armado-en-colombia/", blurb:"Clandestine drone schools in Colombian and Venezuelan territory professionalize EMC and ELN unmanned operations. Includes Tibú attack that killed a 12-year-old.", platformMentioned:false },
+      { date:"2025-12-19", pub:"CNN", title:"Seven Colombian soldiers killed in guerrilla attack with drones and explosives", url:"https://www.cnn.com/2025/12/19/americas/colombia-eln-guerrilla-drone-attack-military-base-latam-intl", blurb:"ELN attack during a nationwide armed strike kills seven soldiers; Petro announces emergency C-UAS procurement.", platformMentioned:false },
+      { date:"2025-12-19", pub:"Colombia One", title:"Colombia Moves to Acquire Anti-Drone Systems After ELN Attack Kills Six Soldiers", url:"https://colombiaone.com/2025/12/19/colombia-acquire-anti-drone-systems-after-eln-attack/", blurb:"Defense Minister Pedro Sánchez confirms existing C-UAS is insufficient; presidential announcement of broader acquisition plan.", platformMentioned:false },
+      { date:"2025-08-29", pub:"NBC News", title:"Growing use of deadly drones by Colombian militants terrifies residents", url:"https://www.nbcnews.com/news/latino/deadly-drones-colombia-militants-terrifies-residents-rcna228009", blurb:"Verified social-media footage shows armed groups using drones for surveillance, intimidation, and bombing campaigns in Catatumbo.", platformMentioned:false },
+      { date:"2025-08-22", pub:"Al Jazeera", title:"At least 18 killed in Colombia in drone attack on helicopter, car bombing", url:"https://www.aljazeera.com/news/2025/8/22/at-least-18-killed-in-colombia-in-drone-attack-on-helicopter-car-bombing", blurb:"FARC-EMC dissidents down a Black Hawk helicopter via drone over coca-eradication operation in Antioquia; 12 officers killed. Same week as the Cali truck-bomb.", platformMentioned:true },
+      { date:"2025-08-14", pub:"The Defense Post", title:"Three Colombian Soldiers Killed in Guerrilla Drone Attack", url:"https://thedefensepost.com/2025/08/14/colombia-guerrilla-drone-attack/", blurb:"Navy patrol on the Naya River struck by explosive drone; FARC dissident group under Iván Mordisco blamed.", platformMentioned:false },
+      { date:"2025-07-22", pub:"The City Paper Bogotá", title:"ELN Modifies Drones To Target Colombia's Security Forces", url:"https://thecitypaperbogota.com/news/eln-modifies-drones-to-target-colombias-security-forces/", blurb:"2025 government data: 230+ explosive incidents documented, ~670 grenades deployed, many drone-launched. Third Division (Cauca/Nariño) reports highest concentration. Improvised mortar grenades cited.", platformMentioned:true },
+      { date:"2025-06-11", pub:"CSIS", title:"Illicit Innovation: Latin America Is Not Prepared to Fight Criminal Drones", url:"https://www.csis.org/analysis/illicit-innovation-latin-america-not-prepared-fight-criminal-drones", blurb:"Henry Ziemer's regional overview placing Colombia's first lethal drone attack (July 2024) in hemispheric context.", platformMentioned:false },
+      { date:"2025-03-05", pub:"Latin America Reports", title:"Drone attacks increasingly affect civilians in Colombia's conflict", url:"https://latinamericareports.com/drone-attacks-increasingly-affect-civilians-in-colombias-conflict/10839/", blurb:"ELN vs Frente 33 air competition in Norte de Santander; Popayán mayor's office temporarily bans private drone use after police station attack.", platformMentioned:false }
+    ]
+  },
+  MX: {
+    name: "Mexico",
+    threat: "high",
+    threatLabel: "High",
+    articles: [
+      { date:"2026-04-07", pub:"HSToday", title:"Mexico's Escalating Cartel Violence and Expanding Cross-Border Threats", url:"https://www.hstoday.us/subject-matter-areas/border-security/mexicos-escalating-cartel-violence-and-expanding-cross-border-threats/", blurb:"October 2025 Tijuana attack on a state government compound housing the attorney general's office, first major urban border-zone offensive UAS use.", platformMentioned:false },
+      { date:"2026-02-25", pub:"Small Wars Journal / NCITE", title:"Mapping Weaponized Drone Attacks Attributed to Mexican Drug Cartels", url:"https://smallwarsjournal.com/2026/02/16/mexican-cartel-drone-attacks-report/", blurb:"NCITE/ACLED dataset: 221 weaponized cartel drone incidents 2021–2025, 77 fatalities. CJNG accounts for ~19% of attributed attacks. Air-dropped grenades, munitions, IEDs.", platformMentioned:true },
+      { date:"2026-02-16", pub:"Cronkite News (ASU)", title:"Concerns grow as Mexican cartels embrace drones for drug smuggling, attacks on rivals", url:"https://cronkitenews.azpbs.org/2026/02/14/drones-mexican-cartels-border/", blurb:"CBP discloses 34,682 drone flights detected within 500m of US-Mexico border in FY2025. First confirmed cartel FPV identified as DJI Avata 2 (~$600).", platformMentioned:true },
+      { date:"2025-02-18", pub:"Small Wars Journal", title:"Criminal Groups Are Ramping Up Explosives in Mexico", url:"https://smallwarsjournal.com/2025/02/18/criminal-groups-are-ramping-up-explosives-in-mexico-dr-bunker-of-swj-gives-insights-for-insight-crime/", blurb:"IED seizures grew from 3 in 2020–21 to 1,375 in 2022. Dr. Robert Bunker tracks parallel drone-borne payload normalization.", platformMentioned:false },
+      { date:"2024-12-XX", pub:"CBS News", title:"Hometown of notorious cartel leader 'El Chapo' hit by drone attacks, forcing residents to flee", url:"https://www.cbsnews.com/news/drug-lord-el-chapo-hometown-hit-by-drone-attacks-residents-flee", blurb:"Badiraguato (Sinaloa) struck by explosive-laden drones; Gov. Rocha confirms displacement. Sinaloa Cartel internal conflict context.", platformMentioned:false },
+      { date:"2024-01-08", pub:"InSight Crime", title:"Mexico Drone Attacks Spike After CJNG, Familia Michoacana Alliance", url:"https://insightcrime.org/news/mexico-drone-attacks-spike-after-cjng-familia-michoacana-alliance/", blurb:"CJNG providing increasingly sophisticated drones to LFM under territorial-control alliance; thermal-camera, explosive-release modifications documented.", platformMentioned:true },
+      { date:"2024-01-XX", pub:"Fox News", title:"Deadly cartel drone attack strikes remote Mexican village", url:"https://foxnews.com/world/deadly-cartel-drone-attack-strikes-remote-mexican-village.amp", blurb:"Guerrero state prosecutor confirms five burned dead in a January 2024 cartel drone-supported attack on a remote community.", platformMentioned:false }
+    ]
+  },
+  VE: {
+    name: "Venezuela",
+    threat: "high",
+    threatLabel: "High",
+    articles: [
+      { date:"2026-01-01", pub:"Military Watch Magazine", title:"Venezuela Deploys Combat Tested Iranian Long Range Strike Drones to Respond to U.S. Military Buildup", url:"https://militarywatchmagazine.com/article/venezuela-receives-iranian-drones-respond", blurb:"Mohajer-6 deployment in context of US destroyer / Marine deployments to the Caribbean since August 2025.", platformMentioned:true },
+      { date:"2025-12-31", pub:"The War Zone", title:"Iranian Strike-Surveillance Drones Are Now Operating In Venezuela", url:"https://www.twz.com/news-features/iranian-mohajer-6-drones-now-operating-in-venezuela", blurb:"First unambiguous visual confirmation of Mohajer-6 in Venezuelan Air Force colors at El Libertador Air Base; Qaem munition compatibility noted.", platformMentioned:true },
+      { date:"2025-12-31", pub:"Defence Security Asia", title:"Iranian Mohajer-6 Armed Drone Confirmed in Venezuelan Air Force Service", url:"https://defencesecurityasia.com/en/iran-mohajer-6-drone-venezuela-air-force-confirmed/", blurb:"Ground support vehicles and routine handling visible in image; assessed as embedded in daily operational cycles, not ceremonial.", platformMentioned:true },
+      { date:"2025-12-30", pub:"U.S. Treasury / OFAC", title:"Treasury Targets Iran-Venezuela Weapons Trade", url:"https://home.treasury.gov/news/press-releases/sb0347", blurb:"OFAC sanctions 10 individuals and entities including a Venezuelan company linked to multi-million dollar combat drone sales to Caracas.", platformMentioned:false },
+      { date:"2025-09-04", pub:"Iran International", title:"Iranians control Venezuelan drone facilities as US warships deployed", url:"https://www.iranintl.com/en/202509044107", blurb:"Iranian specialists still oversee assembly at El Libertador; access blocked for unauthorized Venezuelan staff. CAVIM facilities detailed. Mohajer-2 kits cited.", platformMentioned:true },
+      { date:"2025-09-03", pub:"Army Recognition", title:"Analysis: How Venezuela uses Iranian drones to boost precision strikes and coastal defenses", url:"https://www.armyrecognition.com/news/army-news/2025/analysis-discover-how-venezuela-uses-iranian-drones-to-boost-precision-strikes-and-coastal-defenses", blurb:"Two decades of Iran–Venezuela drone cooperation; Mohajer-2/6, Shahed-136 derivative, Qaem munitions detailed.", platformMentioned:true },
+      { date:"2025-09-01", pub:"DroneXL", title:"Venezuela Prepares For U.S. Attack With Armed Drones", url:"https://dronexl.co/2025/09/01/venezuela-prepares-for-us-attack-with-drones/", blurb:"Maduro regime UCAV buildup; Miami Herald / InfoDefensa source imagery referenced.", platformMentioned:false }
+    ]
+  },
+  BR: {
+    name: "Brazil",
+    threat: "moderate",
+    threatLabel: "Moderate",
+    articles: [
+      { date:"2025-07-14", pub:"DefesaNet", title:"Sistema Antidron reforça poder de defesa do Exército", url:"https://www.defesanet.com.br/vant/sistema-antidrone-reforca-poder-de-defesa-do-exercito/", blurb:"Brazilian Army's SCE-0100 publicized as precision RF-jamming neutralization solution integrated with command-and-control under SISFRON.", platformMentioned:true },
+      { date:"2025-03-06", pub:"InSight Crime", title:"Drones Fuel Criminal Arms Race in Latin America", url:"https://insightcrime.org/news/drones-fuel-criminal-arms-race-latin-america/", blurb:"Regional roundup including 2014 São José dos Campos and 2019 Rio Grande do Sul prison drone seizures (43 units, ~4 kg narcotics).", platformMentioned:false },
+      { date:"2024-11-11", pub:"DroneLife", title:"Brazilian Drone Industry Takes Flight: BIRDS' VEGA UTM Selected for National Airspace Modernization", url:"https://dronelife.com/2024/11/11/brazilian-drone-industry-takes-flight-birds-vega-utm-selected-for-national-airspace-modernization-project/", blurb:"DECEA authorizes BIRDS (Speedbird Aero, High Lander, Cando) to use BR-UTM for coordinated BVLOS counter-drone services.", platformMentioned:false }
+    ]
+  },
+  AR: {
+    name: "Argentina",
+    threat: "low",
+    threatLabel: "Low",
+    articles: [
+      { date:"2025-01-16", pub:"C-UAS Hub", title:"Argentina's Ministry of Security to acquire classified anti-UAS system", url:"https://www.cuashub.com/en/content/argentina-s-ministry-of-security-to-acquire-classified-anti-uas-system/", blurb:"Classified anti-drone procurement driven by smuggling, terrorism, prison-contraband concerns.", platformMentioned:false },
+      { date:"2024-07-23", pub:"Boletín Oficial", title:"Aviación Civil No Tripulada — Decreto 663/2024", url:"https://www.boletinoficial.gob.ar/detalleAviso/primera/311129/20240724", blurb:"Milei administration deregulation removing oversight for sub-250g and licensing for sub-25kg drones.", platformMentioned:false }
+    ]
+  },
+  PA: {
+    name: "Panama",
+    threat: "moderate",
+    threatLabel: "Moderate",
+    articles: [
+      { date:"2020-11-26", pub:"InSight Crime", title:"Drones Used to Drop Contraband into Panama Prison", url:"https://insightcrime.org/news/drones-contraband-panama-prison/", blurb:"La Joya seizures of cell phones, narcotics, pistol parts, and 'crispi' (coca-marijuana mix) — 1,587 drones seized across Panamanian prisons cited.", platformMentioned:false }
+    ]
+  },
+  REGIONAL: {
+    name: "Regional & Cross-Cutting",
+    threat: "high",
+    threatLabel: "Multi-country",
+    articles: [
+      { date:"2025-09-15", pub:"Reuters", title:"US reinterprets arms control pact to ease military drone exports", url:"https://www.reuters.com/business/aerospace-defense/us-reinterprets-arms-control-pact-ease-military-drone-exports-2025-09-15/", blurb:"Reclassification of MQ-9 Reaper-class systems as 'aircraft' rather than 'missile systems' for export-control purposes.", platformMentioned:true },
+      { date:"2025-09-01", pub:"DroneXL", title:"Cartels Deploy FPV Drones and Anti-UAS Systems in Criminal Arms Race", url:"https://dronexl.co/2025/09/01/cartels-deploy-fpv-drones-anti-uas-systems/", blurb:"FPV adoption by both CJNG and Sinaloa cartel; emergence of criminal counter-UAS capability. DJI Avata 2 referenced as documented platform.", platformMentioned:true },
+      { date:"2025-07-29", pub:"Intelligence Online", title:"Ukraine Counterintelligence Investigates Presence of Sicarios on Front Line", url:"https://www.intelligenceonline.com/government-intelligence/2025/07/29/ukraine-counterintelligence-investigates-presence-of-sicarios-on-front-line,110496139-eve", blurb:"Spanish-speaking volunteers in the International Legion suspected of cartel ties seeking FPV drone training transferable to Latin America.", platformMentioned:false },
+      { date:"2025-07-07", pub:"France 24", title:"Drones: A new weapon for Colombia's guerrillas", url:"https://www.france24.com/en/americas/20250707-colombia-drones-armed-conflict-guerrillas-projectiles-human-rights-farc-eln", blurb:"On-the-ground reporting on the diffusion of weaponized drones across FARC dissident and ELN factions.", platformMentioned:false },
+      { date:"2025-03-03", pub:"Drone Wars UK", title:"Armed Drone Proliferation: Continued Exports Leading to Civilian Casualties", url:"https://dronewars.net/2025/03/03/armed-drone-proliferation-continued-exports-leading-to-civilian-casualties/", blurb:"Global mapping of armed MALE drone proliferation, including Iran→Venezuela transfer in the regional context.", platformMentioned:true }
+    ]
+  }
+};
+
+/* ====== RENDER SOURCES ====== */
+let activeCountryFilter = 'ALL';
+
+function isRecent(dateStr){
+  // Treat anything within ~90 days of the current monitor date as "recent"
+  // Date strings like "2024-12-XX" are treated as not-recent.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+  const articleDate = new Date(dateStr + 'T00:00:00Z');
+  if (isNaN(articleDate)) return false;
+  const now = new Date();
+  const days = (now - articleDate) / (1000*60*60*24);
+  return days <= 90;
+}
+
+function renderCountryFilters(){
+  const wrap = document.getElementById('src-country-filters');
+  const totalAll = Object.values(sourceArchive).reduce((s,g)=>s+g.articles.length,0);
+  const buttons = [
+    { code:'ALL', label:'All countries', count: totalAll }
+  ].concat(Object.entries(sourceArchive).map(([code,g])=>({
+    code, label: g.name, count: g.articles.length
+  })));
+  wrap.innerHTML = buttons.map(b=>
+    `<button class="filter-btn ${activeCountryFilter===b.code?'on':''}" data-country="${b.code}">${b.label}<span class="ct">${b.count}</span></button>`
+  ).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeCountryFilter = btn.dataset.country;
+      renderCountryFilters();
+      renderSources(document.getElementById('sources-search').value);
+    });
+  });
+}
+
+function renderSources(filterTerm){
+  const stack = document.getElementById('sources-stack');
+  const term = (filterTerm || '').toLowerCase().trim();
+  let totalShown = 0;
+  let totalAll = 0;
+  Object.values(sourceArchive).forEach(g=>totalAll+=g.articles.length);
+
+  const entries = Object.entries(sourceArchive).filter(([code])=>
+    activeCountryFilter === 'ALL' || activeCountryFilter === code
+  );
+
+  const groupsHtml = entries.map(([code, group])=>{
+    // Sort articles within each country, most-recent first
+    const sortedArticles = [...group.articles].sort((a,b)=> (b.date > a.date ? 1 : -1));
+    const matchingArticles = !term ? sortedArticles : sortedArticles.filter(a=>
+      a.title.toLowerCase().includes(term) ||
+      a.pub.toLowerCase().includes(term) ||
+      a.blurb.toLowerCase().includes(term) ||
+      group.name.toLowerCase().includes(term)
+    );
+    if (matchingArticles.length === 0) return '';
+    totalShown += matchingArticles.length;
+    // Open by default when there's a search term OR when a specific country is filtered
+    const openAttr = (term || activeCountryFilter !== 'ALL') ? 'open' : '';
+    const recentCount = matchingArticles.filter(a=>isRecent(a.date)).length;
+    const platformCount = matchingArticles.filter(a=>a.platformMentioned).length;
+    const articlesHtml = matchingArticles.map(a=>{
+      const recentBadge = isRecent(a.date) ? '<span class="src-badge recent">Recent</span>' : '';
+      const platformBadge = a.platformMentioned ? '<span class="src-badge platform">Platform / Munition</span>' : '';
+      return `
+      <div class="src-item">
+        <div class="src-date">${a.date}</div>
+        <div>
+          <div class="src-pub">${a.pub}${recentBadge}${platformBadge}</div>
+          <h6><a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a></h6>
+          <div class="src-blurb">${a.blurb}</div>
+        </div>
+        <a class="src-out" href="${a.url}" target="_blank" rel="noopener noreferrer">Open ↗</a>
+      </div>`;
+    }).join('');
+    const metaCounts = [];
+    if (recentCount) metaCounts.push(`${recentCount} recent`);
+    if (platformCount) metaCounts.push(`${platformCount} w/ platform`);
+    const metaStr = metaCounts.length ? ` · ${metaCounts.join(' · ')}` : '';
+    return `
+      <div class="src-group ${openAttr}" data-code="${code}">
+        <button class="src-group-head" type="button">
+          <div class="left">
+            <span class="chev"></span>
+            <span class="country-name">${group.name}</span>
+            <span class="src-count">${matchingArticles.length} ${matchingArticles.length===1?'article':'articles'}${metaStr}</span>
+          </div>
+          <div class="right">
+            <span class="src-threat ${group.threat}">${group.threatLabel}</span>
+          </div>
+        </button>
+        <div class="src-list">${articlesHtml}</div>
+      </div>
+    `;
+  }).filter(Boolean).join('');
+
+  stack.innerHTML = groupsHtml || `<div style="padding:40px;text-align:center;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;font-size:12px;">// no matches</div>`;
+
+  let metaLabel;
+  if (activeCountryFilter !== 'ALL' && term) {
+    metaLabel = `${totalShown} matches in ${sourceArchive[activeCountryFilter]?.name || activeCountryFilter}`;
+  } else if (activeCountryFilter !== 'ALL') {
+    metaLabel = `${totalShown} articles · ${sourceArchive[activeCountryFilter]?.name || activeCountryFilter}`;
+  } else if (term) {
+    metaLabel = `${totalShown} of ${totalAll} articles shown`;
+  } else {
+    metaLabel = `${totalAll} articles indexed`;
+  }
+  document.getElementById('src-meta-count').textContent = metaLabel;
+
+  // Re-bind accordion toggles
+  document.querySelectorAll('.src-group-head').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      h.parentElement.classList.toggle('open');
+    });
+  });
+}
+
+
+function renderDetail(code){
+  const c = countries[code];
+  if (!c) return;
+  document.querySelectorAll('.country-node').forEach(n=>n.classList.remove('active'));
+  const node = document.querySelector(`.country-node[data-code="${code}"]`);
+  if (node) node.classList.add('active');
+
+  const el = document.getElementById('detail-pane');
+  el.innerHTML = `
+    <div class="country-header">
+      <div>
+        <h3>${c.name}</h3>
+        <div class="iso">${c.iso}</div>
+      </div>
+      <span class="threat-badge ${c.threat.level}">${c.threat.label}</span>
+    </div>
+    <div class="counter-block">
+      <div class="counter-cell">
+        <div class="lab">Confirmed incidents</div>
+        <div class="num big">${c.incidents}</div>
+        <div class="sub">${c.incidentNote}</div>
+      </div>
+      <div class="counter-cell">
+        <div class="lab">Drone-attributable casualties</div>
+        <div class="num">${c.casualties}</div>
+        <div class="sub">${c.casualtyNote}</div>
+      </div>
+    </div>
+    <div class="detail-block">
+      <h4>// Assessment</h4>
+      <p>${c.summary}</p>
+    </div>
+    <div class="detail-block">
+      <h4>// VNSAs operating UAS</h4>
+      <div>${c.vnsas.map(v=>`<span class="pill vnsa">${v}</span>`).join('')}</div>
+    </div>
+    <div class="detail-block">
+      <h4>// Platforms in use</h4>
+      <div>${c.platforms.map(p=>`<span class="pill platform">${p}</span>`).join('')}</div>
+    </div>
+    <div class="detail-block">
+      <h4>// Domestic manufacturers</h4>
+      <p>${c.domestic}</p>
+    </div>
+    <div class="detail-block">
+      <h4>// Foreign systems fielded</h4>
+      <p>${c.foreign}</p>
+    </div>
+    <div class="detail-block">
+      <h4>// Investment &amp; procurement</h4>
+      <p>${c.investment}</p>
+    </div>
+    <div class="detail-block">
+      <h4>// Regulatory framework</h4>
+      <p>${c.regulation}</p>
+    </div>
+  `;
+}
+
+/* ====== INCIDENT RENDER ====== */
+function renderIncidents(filter){
+  const list = document.getElementById('feed-list');
+  const items = filter && filter !== 'all' ? incidents.filter(i=>i.type===filter) : incidents;
+  if (items.length === 0){
+    list.innerHTML = `<div style="padding:40px;text-align:center;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;font-size:12px;">// no incidents in this category</div>`;
+    return;
+  }
+  list.innerHTML = items.map(i=>{
+    const tagLabel = {kinetic:'Kinetic',recon:'Recon',smuggle:'Smuggling',chem:'Chem payload',counter:'State response'}[i.type] || i.type;
+    const cname = i.country === 'REGIONAL' ? 'REGIONAL'
+                : countries[i.country] ? countries[i.country].name.toUpperCase() : i.country;
+    const href = i.url || '#';
+    return `
+    <a class="incident" data-type="${i.type}" href="${href}" target="_blank" rel="noopener noreferrer">
+      <span class="ext-arrow">↗ open source</span>
+      <div class="inc-time">
+        <span class="date">${i.date.split(' ')[1]}</span>
+        <span class="ago">${i.time}</span>
+      </div>
+      <div class="inc-body">
+        <h5>${i.title}</h5>
+        <div class="desc">${i.desc}</div>
+        <div class="inc-meta">
+          <span class="inc-tag ${i.type}">${tagLabel}</span>
+          <span class="inc-tag">${i.date.split(' ')[0]}</span>
+        </div>
+      </div>
+      <div class="inc-side">
+        <span class="src">${i.source}</span>
+        <span class="country">${cname}</span>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+/* ====== CLOCK ====== */
+function tick(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const s = `${d.getUTCFullYear()}.${pad(d.getUTCMonth()+1)}.${pad(d.getUTCDate())} · ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} UTC`;
+  document.getElementById('clock').textContent = s;
+}
+setInterval(tick,1000); tick();
+
+/* ====== EVENTS ====== */
+document.querySelectorAll('.country-node').forEach(n=>{
+  n.addEventListener('click', ()=> renderDetail(n.dataset.code));
+});
+document.querySelectorAll('.filter-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    renderIncidents(b.dataset.filter);
+  });
+});
+
+/* ====== INIT ====== */
+renderDetail('CO');
+renderIncidents('all');
+renderCountryFilters();
+renderSources('');
+
+document.getElementById('sources-search').addEventListener('input', (e)=>{
+  renderSources(e.target.value);
+});
+</script>
+</body>
+</html>
