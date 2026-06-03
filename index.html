@@ -10,15 +10,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@300;400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#182226;
-    --bg-2:#1e2c32;
-    --panel:#223238;
-    --panel-2:#2a3c42;
-    --line:#384e56;
-    --line-2:#4a6068;
-    --ink:#eaede8;
-    --ink-dim:#a0ada8;
-    --ink-faint:#728078;
+    --bg:#1a3244;
+    --bg-2:#213c52;
+    --panel:#284860;
+    --panel-2:#2e546e;
+    --line:#3e6880;
+    --line-2:#507c94;
+    --ink:#f2f6f4;
+    --ink-dim:#b4c8c4;
+    --ink-faint:#82a4a8;
     --accent:#d4ff3a;       /* signal yellow-green */
     --accent-2:#ff5e3a;     /* alert red */
     --accent-3:#3ad4ff;     /* info cyan */
@@ -27,14 +27,14 @@
     --moderate:#ffd13a;
     --low:#7ad43a;
     --calm:#3a8b9a;
-    --grid: rgba(212,255,58,0.07);
+    --grid: rgba(212,255,58,0.08);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{background:var(--bg);color:var(--ink);font-family:'Inter Tight',sans-serif;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;}
   body{
     background:
-      radial-gradient(ellipse at top left, rgba(212,255,58,0.05), transparent 50%),
-      radial-gradient(ellipse at bottom right, rgba(255,94,58,0.04), transparent 50%),
+      radial-gradient(ellipse at top left, rgba(212,255,58,0.06), transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(255,94,58,0.05), transparent 50%),
       var(--bg);
     min-height:100vh;
     background-attachment:fixed;
@@ -53,7 +53,7 @@
   /* ====== TOP BAR ====== */
   .topbar{
     position:sticky;top:0;z-index:50;
-    background:rgba(24,34,38,0.92);
+    background:rgba(26,50,68,0.94);
     backdrop-filter:blur(12px);
     border-bottom:1px solid var(--line);
     padding:14px 28px;
@@ -64,7 +64,7 @@
     width:36px;height:36px;border:1px solid var(--accent);
     display:grid;place-items:center;font-family:'JetBrains Mono',monospace;
     font-weight:700;color:var(--accent);font-size:14px;letter-spacing:-0.5px;
-    background:rgba(212,255,58,0.05);
+    background:rgba(212,255,58,0.06);
   }
   .brand-name{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;letter-spacing:0.5px;}
   .brand-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:2px;margin-top:-2px;}
@@ -136,14 +136,14 @@
   .map-svg{width:100%;height:100%;display:block;}
   .map-legend{
     position:absolute;bottom:16px;left:16px;
-    background:rgba(24,34,38,0.92);backdrop-filter:blur(8px);
+    background:rgba(26,50,68,0.94);backdrop-filter:blur(8px);
     border:1px solid var(--line);padding:12px 14px;
     font-family:'JetBrains Mono',monospace;font-size:10px;
   }
   .map-legend-title{text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint);margin-bottom:8px;}
   .legend-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
   .legend-sw{width:14px;height:14px;display:block;}
-  .map-tag{position:absolute;top:16px;right:16px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--ink-faint);background:rgba(24,34,38,0.82);padding:6px 10px;border:1px solid var(--line);}
+  .map-tag{position:absolute;top:16px;right:16px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--ink-faint);background:rgba(26,50,68,0.84);padding:6px 10px;border:1px solid var(--line);}
   .country-node{cursor:pointer;transition:all .2s;}
   .country-node:hover{filter:brightness(1.3);}
   .country-node.active circle{stroke:var(--accent);stroke-width:2;}
@@ -481,7 +481,7 @@
         <!-- decorative grid -->
         <defs>
           <pattern id="mapgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M40 0H0V40" fill="none" stroke="rgba(212,255,58,0.05)" stroke-width="0.5"/>
+            <path d="M40 0H0V40" fill="none" stroke="rgba(212,255,58,0.06)" stroke-width="0.5"/>
           </pattern>
           <radialGradient id="glow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stop-color="rgba(212,255,58,0.15)"/>
